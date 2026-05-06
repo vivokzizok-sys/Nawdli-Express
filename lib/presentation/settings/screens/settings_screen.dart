@@ -91,6 +91,28 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                child: DropdownButtonFormField<String>(
+                  value: settings.notificationSound,
+                  dropdownColor: AppColors.surface(context),
+                  decoration: InputDecoration(
+                    labelText: context.t('notification_sound'),
+                    prefixIcon: const Icon(Icons.notifications_active_outlined),
+                  ),
+                  items: AppSettingsController.notificationSounds
+                      .map(
+                        (sound) => DropdownMenuItem(
+                          value: sound.key,
+                          child: Text(sound.label),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) settings.setNotificationSound(value);
+                  },
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 18),

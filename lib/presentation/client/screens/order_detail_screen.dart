@@ -76,6 +76,27 @@ class OrderDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 _OrderSummary(order: order),
+                if (order.status == OrderStatus.accepted ||
+                    order.status == OrderStatus.inProgress ||
+                    order.status == OrderStatus.delivered) ...[
+                  const SizedBox(height: 12),
+                  PrimaryButton(
+                    label: context.t('active_trip'),
+                    icon: const Icon(Icons.navigation_rounded, size: 18),
+                    onPressed: order.driverId == null
+                        ? null
+                        : () async {
+                            final driver = await context
+                                .read<OrderBloc>()
+                                .getUser(order.driverId!);
+                            if (driver == null || !context.mounted) return;
+                            context.go('/active-trip', extra: {
+                              'order': order,
+                              'otherParty': driver,
+                            });
+                          },
+                  ),
+                ],
                 if (order.status == OrderStatus.priced ||
                     order.status == OrderStatus.requested ||
                     order.status == OrderStatus.rejected) ...[
@@ -163,6 +184,18 @@ class OrderDetailScreen extends StatelessWidget {
       'cancelledAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    if (order.driverId != null) {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': order.driverId,
+        'orderId': order.orderId,
+        'type': 'order_cancelled',
+        'title': 'Order cancelled',
+        'body': 'The client cancelled the delivery request.',
+        'createdBy': order.clientId,
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.t('order_cancelled'))),

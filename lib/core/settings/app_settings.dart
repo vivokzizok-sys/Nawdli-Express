@@ -3,15 +3,41 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum AppLanguage { en, ar }
 
+class NotificationSoundOption {
+  final String key;
+  final String label;
+
+  const NotificationSoundOption(this.key, this.label);
+}
+
 class AppSettingsController extends ChangeNotifier {
   static const _themeKey = 'theme_mode';
   static const _languageKey = 'language_code';
+  static const _notificationSoundKey = 'notification_sound';
+
+  static const notificationSounds = <NotificationSoundOption>[
+    NotificationSoundOption('message_sound', 'Message sound'),
+    NotificationSoundOption('iphone_sms', 'iPhone SMS'),
+    NotificationSoundOption('sms_android', 'Android SMS'),
+    NotificationSoundOption('delivered_message', 'Delivered message'),
+    NotificationSoundOption('whatsapp_notification', 'WhatsApp style'),
+    NotificationSoundOption('notice11', 'Notice'),
+    NotificationSoundOption('calm_system', 'Calm system'),
+    NotificationSoundOption('melodic_calm', 'Melodic calm'),
+    NotificationSoundOption('multimedia_message', 'Multimedia message'),
+    NotificationSoundOption('pleasant_signal', 'Pleasant signal'),
+    NotificationSoundOption('sms_sound', 'SMS sound'),
+    NotificationSoundOption('sms_sound_alt', 'SMS sound alt'),
+    NotificationSoundOption('social_logout', 'Social logout'),
+  ];
 
   ThemeMode _themeMode = ThemeMode.light;
   AppLanguage _language = AppLanguage.en;
+  String _notificationSound = 'message_sound';
 
   ThemeMode get themeMode => _themeMode;
   AppLanguage get language => _language;
+  String get notificationSound => _notificationSound;
   Locale get locale => Locale(_language == AppLanguage.ar ? 'ar' : 'en');
   TextDirection get textDirection =>
       _language == AppLanguage.ar ? TextDirection.rtl : TextDirection.ltr;
@@ -20,8 +46,12 @@ class AppSettingsController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final savedTheme = prefs.getString(_themeKey);
     final savedLanguage = prefs.getString(_languageKey);
+    final savedSound = prefs.getString(_notificationSoundKey);
     _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
     _language = savedLanguage == 'ar' ? AppLanguage.ar : AppLanguage.en;
+    if (notificationSounds.any((sound) => sound.key == savedSound)) {
+      _notificationSound = savedSound!;
+    }
     notifyListeners();
   }
 
@@ -40,6 +70,14 @@ class AppSettingsController extends ChangeNotifier {
       _languageKey,
       language == AppLanguage.ar ? 'ar' : 'en',
     );
+  }
+
+  Future<void> setNotificationSound(String soundKey) async {
+    if (!notificationSounds.any((sound) => sound.key == soundKey)) return;
+    _notificationSound = soundKey;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_notificationSoundKey, soundKey);
   }
 }
 
@@ -110,6 +148,7 @@ class AppStrings {
     'light': 'Light',
     'dark': 'Dark',
     'language': 'Language',
+    'notification_sound': 'Notification sound',
     'english': 'English',
     'arabic': 'Arabic',
     'sign_out': 'Sign out',
@@ -144,6 +183,10 @@ class AppStrings {
     'driver_sent_price': 'Driver sent a delivery price',
     'waiting_driver_price': 'Waiting for driver price',
     'price_rejected': 'Price rejected',
+    'client_rejected_price':
+        'The client rejected your price. You can send a new price.',
+    'new_delivery_price': 'New delivery price',
+    'client_cancelled_order': 'The client cancelled this order.',
     'confirm_delivery_received': 'Confirm delivery received',
     'confirm_delivery_body': 'Confirm only after receiving your delivery.',
     'dashboard': 'Dashboard',
@@ -293,6 +336,17 @@ class AppStrings {
     'comments': 'Comments',
     'no_comments': 'No comments yet.',
     'delete_comment': 'Delete comment',
+    'delete': 'Delete',
+    'delete_selected': 'Delete selected',
+    'select_all': 'Select all',
+    'call_driver': 'Call driver',
+    'call_logs': 'Calls from app',
+    'no_call_logs': 'No calls from the app yet.',
+    'called_from_app': 'From app',
+    'update_required': 'Update required',
+    'update_required_body':
+        'A new version is required to continue using Veloce Express.',
+    'download_update': 'Download update',
     'image_too_large': 'Image is too large. Choose a smaller photo.',
   };
 
@@ -525,6 +579,32 @@ class AppStrings {
         '\u062d\u0630\u0641 \u0627\u0644\u062a\u0639\u0644\u064a\u0642',
     'image_too_large':
         '\u0627\u0644\u0635\u0648\u0631\u0629 \u0643\u0628\u064a\u0631\u0629. \u0627\u062e\u062a\u0631 \u0635\u0648\u0631\u0629 \u0623\u0635\u063a\u0631.',
+    'notification_sound':
+        '\u0635\u0648\u062a \u0627\u0644\u0625\u0634\u0639\u0627\u0631\u0627\u062a',
+    'client_rejected_price':
+        '\u0627\u0644\u0632\u0628\u0648\u0646 \u0631\u0641\u0636 \u0633\u0639\u0631\u0643. \u064a\u0645\u0643\u0646\u0643 \u0625\u0631\u0633\u0627\u0644 \u0633\u0639\u0631 \u062c\u062f\u064a\u062f.',
+    'new_delivery_price':
+        '\u0633\u0639\u0631 \u0627\u0644\u062a\u0648\u0635\u064a\u0644 \u0627\u0644\u062c\u062f\u064a\u062f',
+    'client_cancelled_order':
+        '\u0627\u0644\u0632\u0628\u0648\u0646 \u0623\u0644\u063a\u0649 \u0647\u0630\u0627 \u0627\u0644\u0637\u0644\u0628.',
+    'delete': '\u062d\u0630\u0641',
+    'delete_selected':
+        '\u062d\u0630\u0641 \u0627\u0644\u0645\u062d\u062f\u062f',
+    'select_all': '\u062a\u062d\u062f\u064a\u062f \u0627\u0644\u0643\u0644',
+    'call_driver':
+        '\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0633\u0627\u0626\u0642',
+    'call_logs':
+        '\u0627\u062a\u0635\u0627\u0644\u0627\u062a \u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642',
+    'no_call_logs':
+        '\u0644\u0627 \u062a\u0648\u062c\u062f \u0627\u062a\u0635\u0627\u0644\u0627\u062a \u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642 \u0628\u0639\u062f.',
+    'called_from_app':
+        '\u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642',
+    'update_required':
+        '\u062a\u062d\u062f\u064a\u062b \u0645\u0637\u0644\u0648\u0628',
+    'update_required_body':
+        '\u064a\u062c\u0628 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0646\u0633\u062e\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 \u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 Veloce Express.',
+    'download_update':
+        '\u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u062a\u062d\u062f\u064a\u062b',
   };
 
   static String translate(AppLanguage language, String key) {

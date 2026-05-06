@@ -58,7 +58,13 @@ class OrderRepositoryImpl implements OrderRepository {
         .where('clientId', isEqualTo: clientId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map(OrderModel.fromFirestore).toList());
+        .map((snap) => snap.docs.map(OrderModel.fromFirestore).where((order) {
+              final hiddenBy = snap.docs
+                      .firstWhere((doc) => doc.id == order.orderId)
+                      .data()['hiddenByClientIds'] as List<dynamic>? ??
+                  const [];
+              return !hiddenBy.contains(clientId);
+            }).toList());
   }
 
   @override
@@ -83,6 +89,8 @@ class OrderRepositoryImpl implements OrderRepository {
           'accepted',
           'inProgress',
           'delivered',
+          'rejected',
+          'cancelled',
         ])
         .orderBy('createdAt', descending: true)
         .limit(100)
@@ -123,7 +131,8 @@ class OrderRepositoryImpl implements OrderRepository {
       final orderData = orderSnap.data();
       if (orderData != null &&
           orderData['driverId'] == driver.uid &&
-          orderData['status'] == 'requested') {
+          (orderData['status'] == 'requested' ||
+              orderData['status'] == 'rejected')) {
         await orderRef.update({
           'status': 'priced',
           'acceptedBidAmount': amount,

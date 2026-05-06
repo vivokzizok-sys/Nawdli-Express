@@ -21,6 +21,8 @@ class ClientHomeScreen extends StatefulWidget {
 }
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
+  final Set<String> _selectedOrderIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -34,8 +36,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.page(context),
       appBar: AppBar(
-        title: Text(context.t('my_orders')),
+        title: Text(_selectedOrderIds.isEmpty
+            ? context.t('my_orders')
+            : '${_selectedOrderIds.length}'),
         actions: [
+          if (_selectedOrderIds.isNotEmpty) ...[
+            IconButton(
+              tooltip: context.t('delete_selected'),
+              icon: const Icon(Icons.delete_outline_rounded),
+              onPressed: () => _hideSelectedOrders(user.uid),
+            ),
+            IconButton(
+              tooltip: context.t('cancel'),
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => setState(_selectedOrderIds.clear),
+            ),
+          ],
           IconButton(
             tooltip: context.t('open_dashboard'),
             icon: const Icon(Icons.insights_rounded),
@@ -63,12 +79,62 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       subtitle: context.t('create_first_order'),
                     );
                   }
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                    itemCount: state.orders.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, index) =>
-                        _OrderTile(order: state.orders[index]),
+                  final deletableIds = state.orders
+                      .where(_canHide)
+                      .map((order) => order.orderId)
+                      .toList();
+                  return Column(
+                    children: [
+                      if (deletableIds.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Row(
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => setState(() {
+                                  _selectedOrderIds
+                                    ..clear()
+                                    ..addAll(deletableIds);
+                                }),
+                                icon: const Icon(Icons.select_all_rounded),
+                                label: Text(context.t('select_all')),
+                              ),
+                              const Spacer(),
+                              if (_selectedOrderIds.isNotEmpty)
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      _hideSelectedOrders(user.uid),
+                                  icon:
+                                      const Icon(Icons.delete_outline_rounded),
+                                  label: Text(context.t('delete_selected')),
+                                ),
+                            ],
+                          ),
+                        ),
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                          itemCount: state.orders.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (_, index) {
+                            final order = state.orders[index];
+                            return _OrderTile(
+                              order: order,
+                              selected:
+                                  _selectedOrderIds.contains(order.orderId),
+                              selectionMode: _selectedOrderIds.isNotEmpty,
+                              onSelect: _canHide(order)
+                                  ? () => _toggleSelection(order.orderId)
+                                  : null,
+                              onDelete: _canHide(order)
+                                  ? () => _hideOrder(order.orderId, user.uid)
+                                  : null,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 }
                 return const Center(
@@ -79,6 +145,40 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         ],
       ),
     );
+  }
+
+  bool _canHide(OrderEntity order) =>
+      order.status == OrderStatus.delivered ||
+      order.status == OrderStatus.rejected;
+
+  void _toggleSelection(String orderId) {
+    setState(() {
+      if (!_selectedOrderIds.add(orderId)) {
+        _selectedOrderIds.remove(orderId);
+      }
+    });
+  }
+
+  Future<void> _hideOrder(String orderId, String clientId) async {
+    await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
+      'hiddenByClientIds': FieldValue.arrayUnion([clientId]),
+      'hiddenAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> _hideSelectedOrders(String clientId) async {
+    final batch = FirebaseFirestore.instance.batch();
+    for (final orderId in _selectedOrderIds) {
+      batch.update(
+          FirebaseFirestore.instance.collection('orders').doc(orderId), {
+        'hiddenByClientIds': FieldValue.arrayUnion([clientId]),
+        'hiddenAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+    if (mounted) setState(_selectedOrderIds.clear);
   }
 }
 
@@ -155,20 +255,36 @@ class _ClientActiveTripBanner extends StatelessWidget {
 
 class _OrderTile extends StatelessWidget {
   final OrderEntity order;
+  final bool selected;
+  final bool selectionMode;
+  final VoidCallback? onSelect;
+  final VoidCallback? onDelete;
 
-  const _OrderTile({required this.order});
+  const _OrderTile({
+    required this.order,
+    required this.selected,
+    required this.selectionMode,
+    this.onSelect,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final color = _statusColor(order.status);
     return InkWell(
-      onTap: () => context.go('/client/order/${order.orderId}'),
+      onTap: selectionMode && onSelect != null
+          ? onSelect
+          : () => context.go('/client/order/${order.orderId}'),
+      onLongPress: onSelect,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.surface(context),
-          border: Border.all(color: AppColors.border(context)),
+          border: Border.all(
+            color: selected ? AppColors.accent : AppColors.border(context),
+            width: selected ? 1.6 : 1,
+          ),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -213,6 +329,15 @@ class _OrderTile extends StatelessWidget {
             const SizedBox(width: 8),
             StatusChip(
                 label: context.statusText(order.status.value), color: color),
+            if (onDelete != null) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: context.t('delete'),
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+                color: AppColors.error,
+              ),
+            ],
           ],
         ),
       ),

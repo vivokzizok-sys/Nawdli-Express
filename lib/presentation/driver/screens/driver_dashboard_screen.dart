@@ -57,10 +57,92 @@ class DriverDashboardScreen extends StatelessWidget {
                 _StatItem(context.t('rating'), user.rating.toStringAsFixed(1),
                     Icons.star_rounded, AppColors.warning),
               ]),
+              const SizedBox(height: 24),
+              Text(context.t('call_logs'), style: AppTextStyles.title2),
+              const SizedBox(height: 12),
+              _DriverCallLogs(driverId: user.uid),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+class _DriverCallLogs extends StatelessWidget {
+  final String driverId;
+
+  const _DriverCallLogs({required this.driverId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('driver_call_logs')
+          .where('driverId', isEqualTo: driverId)
+          .limit(30)
+          .snapshots(),
+      builder: (context, snap) {
+        final docs = snap.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return Text(
+            context.t('no_call_logs'),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
+          );
+        }
+        docs.sort((a, b) {
+          final at = a.data()['createdAt'] as Timestamp?;
+          final bt = b.data()['createdAt'] as Timestamp?;
+          return (bt?.millisecondsSinceEpoch ?? 0)
+              .compareTo(at?.millisecondsSinceEpoch ?? 0);
+        });
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data();
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.phone_callback_outlined,
+                      color: AppColors.accent),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data['clientName'] as String? ?? context.t('client'),
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                        Text(
+                          data['clientPhone'] as String? ?? '',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    context.t('called_from_app'),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary(context),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

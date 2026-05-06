@@ -2,12 +2,15 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/user_entity.dart';
+import '../../auth/bloc/auth_bloc.dart';
 import '../../shared/widgets/shared_widgets.dart';
 
 class DriverProfileScreen extends StatelessWidget {
@@ -94,12 +97,35 @@ class DriverProfileScreen extends StatelessWidget {
             onPressed: () =>
                 context.push('/client/create-order', extra: driver),
           ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => _callDriver(context),
+            icon: const Icon(Icons.phone_rounded),
+            label: Text(context.t('call_driver')),
+          ),
           const SizedBox(height: 24),
           Text(context.t('reviews'), style: AppTextStyles.title3),
           const SizedBox(height: 10),
           _DriverReviews(driverId: driver.uid),
         ],
       ),
+    );
+  }
+
+  Future<void> _callDriver(BuildContext context) async {
+    final client = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+    await FirebaseFirestore.instance.collection('driver_call_logs').add({
+      'driverId': driver.uid,
+      'driverName': driver.fullName,
+      'clientId': client.uid,
+      'clientName': client.fullName,
+      'clientPhone': client.phoneNumber,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    final normalized = driver.phoneNumber.replaceAll(RegExp(r'[\s\-.]'), '');
+    await launchUrl(
+      Uri(scheme: 'tel', path: normalized),
+      mode: LaunchMode.externalApplication,
     );
   }
 }

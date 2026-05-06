@@ -78,10 +78,30 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                 _OrderRouteCard(order: order),
                                 const SizedBox(height: 18),
                               ],
-                              if (order?.status == OrderStatus.requested) ...[
+                              if (order?.status == OrderStatus.rejected) ...[
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    context.t('client_rejected_price'),
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                              ],
+                              if (order?.status == OrderStatus.requested ||
+                                  order?.status == OrderStatus.rejected) ...[
                                 AppTextField(
                                   controller: _amount,
-                                  hint: context.t('delivery_price'),
+                                  hint: order?.status == OrderStatus.rejected
+                                      ? context.t('new_delivery_price')
+                                      : context.t('delivery_price'),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
                                     decimal: true,
@@ -138,6 +158,14 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                       'otherParty': client,
                                     });
                                   },
+                                ),
+                              ] else if (order?.status ==
+                                  OrderStatus.cancelled) ...[
+                                Text(
+                                  context.t('client_cancelled_order'),
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.error,
+                                  ),
                                 ),
                               ] else if (order?.acceptedBidAmount != null) ...[
                                 Text(

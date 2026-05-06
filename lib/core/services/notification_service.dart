@@ -73,7 +73,12 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _notificationsSub;
   bool _initializedSnapshot = false;
+  String _preferredSound = 'message_sound';
   int _notificationId = 1000;
+
+  void setPreferredSound(String sound) {
+    _preferredSound = sound;
+  }
 
   Future<void> initialize() async {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -96,15 +101,27 @@ class NotificationService {
     String? payload,
   }) async {
     final channel = _channels[type] ?? _defaultChannel;
+    final preferredChannel = AndroidNotificationChannel(
+      'veloce_express_user_sound_$_preferredSound',
+      'Selected notification sound',
+      description: 'User selected Veloce Express notification sound.',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      sound: RawResourceAndroidNotificationSound(_preferredSound),
+    );
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await android?.createNotificationChannel(preferredChannel);
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
-        channel.id,
-        channel.name,
+        preferredChannel.id,
+        preferredChannel.name,
         channelDescription: channel.description,
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,
-        sound: channel.sound,
+        sound: preferredChannel.sound,
         enableVibration: true,
         category: AndroidNotificationCategory.message,
         icon: '@mipmap/ic_launcher',

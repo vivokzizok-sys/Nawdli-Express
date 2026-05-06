@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'core/constants/app_colors.dart';
 import 'core/constants/app_text_styles.dart';
 import 'core/router/app_router.dart';
 import 'core/settings/app_settings.dart';
@@ -93,6 +95,10 @@ class _VeloceExpressAppState extends State<VeloceExpressApp> {
 
   Future<void> _initNotifications() async {
     await _notificationSvc.initialize();
+    _notificationSvc.setPreferredSound(_settingsController.notificationSound);
+    _settingsController.addListener(() {
+      _notificationSvc.setPreferredSound(_settingsController.notificationSound);
+    });
     final current = _authBloc.state;
     if (current is AuthAuthenticated) {
       await _notificationSvc.watchUserNotifications(current.user.uid);
@@ -149,7 +155,8 @@ class _VeloceExpressAppState extends State<VeloceExpressApp> {
               ],
               builder: (context, child) => Directionality(
                 textDirection: _settingsController.textDirection,
-                child: child ?? const SizedBox.shrink(),
+                child:
+                    _ForceUpdateGate(child: child ?? const SizedBox.shrink()),
               ),
               routerConfig: router,
             );
@@ -157,5 +164,100 @@ class _VeloceExpressAppState extends State<VeloceExpressApp> {
         ),
       ),
     );
+  }
+}
+
+class _ForceUpdateGate extends StatelessWidget {
+  static const _currentVersion = '1.0.0';
+
+  final Widget child;
+
+  const _ForceUpdateGate({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('android')
+          .snapshots(),
+      builder: (context, snap) {
+        final data = snap.data?.data();
+        final latestVersion = data?['latestVersion'] as String?;
+        final minVersion = data?['minVersion'] as String?;
+        final apkUrl = data?['apkUrl'] as String?;
+        final forceUpdate = data?['forceUpdate'] as bool? ?? false;
+        final mustUpdate = (minVersion != null &&
+                _compareVersions(_currentVersion, minVersion) < 0) ||
+            (forceUpdate &&
+                latestVersion != null &&
+                _compareVersions(_currentVersion, latestVersion) < 0);
+
+        if (!mustUpdate) return child;
+        return Material(
+          color: AppColors.page(context),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.border(context)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.system_update_rounded,
+                        color: AppColors.accent, size: 42),
+                    const SizedBox(height: 14),
+                    Text(
+                      context.t('update_required'),
+                      style: AppTextStyles.title2.copyWith(
+                        color: AppColors.textPrimary(context),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.t('update_required_body'),
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.textSecondary(context),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 18),
+                    FilledButton.icon(
+                      onPressed: apkUrl == null
+                          ? null
+                          : () => launchUrl(
+                                Uri.parse(apkUrl),
+                                mode: LaunchMode.externalApplication,
+                              ),
+                      icon: const Icon(Icons.download_rounded),
+                      label: Text(context.t('download_update')),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  int _compareVersions(String a, String b) {
+    final left = a.split('.').map((part) => int.tryParse(part) ?? 0).toList();
+    final right = b.split('.').map((part) => int.tryParse(part) ?? 0).toList();
+    final length = left.length > right.length ? left.length : right.length;
+    for (var i = 0; i < length; i++) {
+      final l = i < left.length ? left[i] : 0;
+      final r = i < right.length ? right[i] : 0;
+      if (l != r) return l.compareTo(r);
+    }
+    return 0;
   }
 }
