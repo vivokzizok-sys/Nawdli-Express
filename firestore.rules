@@ -34,19 +34,24 @@ service cloud.firestore {
       return isApproved() && myUser().data.role == 'client';
     }
 
+    function isStore() {
+      return isApproved() && myUser().data.role == 'store';
+    }
+
     function orderParticipant(orderId) {
       let order = get(/databases/$(database)/documents/orders/$(orderId));
       return isApproved()
         && (
           order.data.clientId == request.auth.uid
           || order.data.driverId == request.auth.uid
+          || order.data.storeId == request.auth.uid
         );
     }
 
     match /users/{uid} {
       allow create: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.role in ['client', 'driver']
+        && request.resource.data.role in ['client', 'driver', 'store']
         && request.resource.data.isApproved == false;
 
       allow read: if signedIn()
@@ -61,6 +66,8 @@ service cloud.firestore {
             'email',
             'isEmailVerified',
             'profilePhotoBase64',
+            'storeType',
+            'storeAddress',
             'currentLocation',
             'locationUpdatedAt',
             'updatedAt'
@@ -78,6 +85,15 @@ service cloud.firestore {
 
       allow update: if isAdmin();
       allow delete: if isAdmin();
+
+      match /menu_items/{itemId} {
+        allow read: if isAdmin()
+          || (isApproved()
+            && get(/databases/$(database)/documents/users/$(uid)).data.role == 'store'
+            && get(/databases/$(database)/documents/users/$(uid)).data.isApproved == true);
+        allow create, update, delete: if isStore()
+          && request.auth.uid == uid;
+      }
     }
 
     match /orders/{orderId} {
@@ -91,7 +107,8 @@ service cloud.firestore {
 
       allow read: if isAdmin()
         || (isClient() && resource.data.clientId == request.auth.uid)
-        || isDriver();
+        || isDriver()
+        || (isStore() && resource.data.storeId == request.auth.uid);
 
       allow update: if isClient()
         && resource.data.clientId == request.auth.uid

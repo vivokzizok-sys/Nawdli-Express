@@ -1,36 +1,55 @@
 import 'order_entity.dart';
 
-enum UserRole { client, driver, admin }
+enum UserRole { client, driver, store, admin }
 
 enum VehicleType { bike, car, truck }
 
+enum StoreType { restaurant, grocery, other }
+
 extension UserRoleX on UserRole {
   String get name => switch (this) {
-        UserRole.client => 'client',
-        UserRole.driver => 'driver',
-        UserRole.admin => 'admin',
-      };
+    UserRole.client => 'client',
+    UserRole.driver => 'driver',
+    UserRole.store => 'store',
+    UserRole.admin => 'admin',
+  };
 
   static UserRole fromString(String value) => switch (value) {
-        'driver' => UserRole.driver,
-        'admin' => UserRole.admin,
-        _ => UserRole.client,
-      };
+    'driver' => UserRole.driver,
+    'store' => UserRole.store,
+    'admin' => UserRole.admin,
+    _ => UserRole.client,
+  };
 }
 
 extension VehicleTypeX on VehicleType {
   String get name => switch (this) {
-        VehicleType.bike => 'bike',
-        VehicleType.car => 'car',
-        VehicleType.truck => 'truck',
-      };
+    VehicleType.bike => 'bike',
+    VehicleType.car => 'car',
+    VehicleType.truck => 'truck',
+  };
 
   static VehicleType? fromString(String? value) => switch (value) {
-        'bike' => VehicleType.bike,
-        'car' => VehicleType.car,
-        'truck' => VehicleType.truck,
-        _ => null,
-      };
+    'bike' => VehicleType.bike,
+    'car' => VehicleType.car,
+    'truck' => VehicleType.truck,
+    _ => null,
+  };
+}
+
+extension StoreTypeX on StoreType {
+  String get name => switch (this) {
+    StoreType.restaurant => 'restaurant',
+    StoreType.grocery => 'grocery',
+    StoreType.other => 'other',
+  };
+
+  static StoreType? fromString(String? value) => switch (value) {
+    'restaurant' => StoreType.restaurant,
+    'grocery' => StoreType.grocery,
+    'other' => StoreType.other,
+    _ => null,
+  };
 }
 
 class UserEntity {
@@ -45,6 +64,8 @@ class UserEntity {
   final String? profilePhotoBase64;
   final String? vehiclePhotoBase64;
   final String? vehiclePhotoContentType;
+  final StoreType? storeType;
+  final String? storeAddress;
   final double rating;
   final int totalDeliveries;
   final LocationPoint? currentLocation;
@@ -61,12 +82,15 @@ class UserEntity {
     this.profilePhotoBase64,
     this.vehiclePhotoBase64,
     this.vehiclePhotoContentType,
+    this.storeType,
+    this.storeAddress,
     this.rating = 0,
     this.totalDeliveries = 0,
     this.currentLocation,
   });
 
   bool get isDriver => role == UserRole.driver;
+  bool get isStore => role == UserRole.store;
   bool get isAdmin => role == UserRole.admin;
 
   UserEntity copyWith({
@@ -86,6 +110,8 @@ class UserEntity {
       profilePhotoBase64: profilePhotoBase64,
       vehiclePhotoBase64: vehiclePhotoBase64,
       vehiclePhotoContentType: vehiclePhotoContentType,
+      storeType: storeType,
+      storeAddress: storeAddress,
       rating: rating,
       totalDeliveries: totalDeliveries,
       currentLocation: currentLocation ?? this.currentLocation,

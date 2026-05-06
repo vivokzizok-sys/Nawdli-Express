@@ -17,8 +17,8 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
-  })  : _auth = auth,
-        _firestore = firestore;
+  }) : _auth = auth,
+       _firestore = firestore;
 
   @override
   Stream<UserEntity?> authStateChanges() {
@@ -50,8 +50,10 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final user = cred.user;
       if (user == null) return const Left(AuthFailure('Sign in failed'));
-      final appUser =
-          await _loadUser(user.uid, emailVerified: user.emailVerified);
+      final appUser = await _loadUser(
+        user.uid,
+        emailVerified: user.emailVerified,
+      );
       if (appUser == null) {
         return const Left(AuthFailure('User profile was not found'));
       }
@@ -72,11 +74,23 @@ class AuthRepositoryImpl implements AuthRepository {
     required UserRole role,
     VehicleType? vehicleType,
     File? vehiclePhoto,
+    StoreType? storeType,
+    String? storeAddress,
+    File? profilePhoto,
   }) async {
     if (role == UserRole.driver &&
         (vehicleType == null || vehiclePhoto == null)) {
       return const Left(
         ValidationFailure('Drivers must upload a vehicle photo'),
+      );
+    }
+    if (role == UserRole.store &&
+        (storeType == null ||
+            storeAddress == null ||
+            storeAddress.trim().isEmpty ||
+            profilePhoto == null)) {
+      return const Left(
+        ValidationFailure('Stores must add type, address, and photo'),
       );
     }
 
@@ -94,6 +108,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       String? vehiclePhotoBase64;
       String? vehiclePhotoContentType;
+      String? profilePhotoBase64;
       if (role == UserRole.driver && vehiclePhoto != null) {
         final bytes = await vehiclePhoto.readAsBytes();
         // Firestore documents are limited to roughly 1 MB. Keep the encoded
@@ -108,6 +123,17 @@ class AuthRepositoryImpl implements AuthRepository {
         vehiclePhotoBase64 = base64Encode(bytes);
         vehiclePhotoContentType = 'image/jpeg';
       }
+      if (role == UserRole.store && profilePhoto != null) {
+        final bytes = await profilePhoto.readAsBytes();
+        if (bytes.length > 650 * 1024) {
+          return const Left(
+            ValidationFailure(
+              'Store photo is too large. Please choose a smaller image.',
+            ),
+          );
+        }
+        profilePhotoBase64 = base64Encode(bytes);
+      }
 
       final model = UserModel(
         uid: firebaseUser.uid,
@@ -118,8 +144,11 @@ class AuthRepositoryImpl implements AuthRepository {
         isEmailVerified: false,
         isApproved: false,
         vehicleType: vehicleType,
+        profilePhotoBase64: profilePhotoBase64,
         vehiclePhotoBase64: vehiclePhotoBase64,
         vehiclePhotoContentType: vehiclePhotoContentType,
+        storeType: storeType,
+        storeAddress: storeAddress?.trim(),
       );
 
       await _firestore.collection('users').doc(firebaseUser.uid).set({
@@ -147,7 +176,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } on FirebaseAuthException catch (e) {
       return Left(
-          AuthFailure(e.message ?? 'Could not send verification email'));
+        AuthFailure(e.message ?? 'Could not send verification email'),
+      );
     }
   }
 
@@ -164,8 +194,10 @@ class AuthRepositoryImpl implements AuthRepository {
     await user.reload();
     final fresh = _auth.currentUser;
     if (fresh == null) return const Left(AuthFailure('Not signed in'));
-    final loaded =
-        await _loadUser(fresh.uid, emailVerified: fresh.emailVerified);
+    final loaded = await _loadUser(
+      fresh.uid,
+      emailVerified: fresh.emailVerified,
+    );
     if (loaded == null) return const Left(AuthFailure('Profile not found'));
     return Right(loaded);
   }
@@ -194,8 +226,8 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     final fresh = await ref.get();
-    return UserModel.fromFirestore(fresh).copyWith(
-      isEmailVerified: emailVerified,
-    );
+    return UserModel.fromFirestore(
+      fresh,
+    ).copyWith(isEmailVerified: emailVerified);
   }
 }

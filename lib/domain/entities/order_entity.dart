@@ -12,28 +12,28 @@ enum OrderStatus {
 
 extension OrderStatusX on OrderStatus {
   String get value => switch (this) {
-        OrderStatus.requested => 'requested',
-        OrderStatus.priced => 'priced',
-        OrderStatus.rejected => 'rejected',
-        OrderStatus.open => 'open',
-        OrderStatus.bidding => 'bidding',
-        OrderStatus.accepted => 'accepted',
-        OrderStatus.inProgress => 'inProgress',
-        OrderStatus.delivered => 'delivered',
-        OrderStatus.cancelled => 'cancelled',
-      };
+    OrderStatus.requested => 'requested',
+    OrderStatus.priced => 'priced',
+    OrderStatus.rejected => 'rejected',
+    OrderStatus.open => 'open',
+    OrderStatus.bidding => 'bidding',
+    OrderStatus.accepted => 'accepted',
+    OrderStatus.inProgress => 'inProgress',
+    OrderStatus.delivered => 'delivered',
+    OrderStatus.cancelled => 'cancelled',
+  };
 
   static OrderStatus fromString(String value) => switch (value) {
-        'requested' => OrderStatus.requested,
-        'priced' => OrderStatus.priced,
-        'rejected' => OrderStatus.rejected,
-        'bidding' => OrderStatus.bidding,
-        'accepted' => OrderStatus.accepted,
-        'inProgress' => OrderStatus.inProgress,
-        'delivered' => OrderStatus.delivered,
-        'cancelled' => OrderStatus.cancelled,
-        _ => OrderStatus.open,
-      };
+    'requested' => OrderStatus.requested,
+    'priced' => OrderStatus.priced,
+    'rejected' => OrderStatus.rejected,
+    'bidding' => OrderStatus.bidding,
+    'accepted' => OrderStatus.accepted,
+    'inProgress' => OrderStatus.inProgress,
+    'delivered' => OrderStatus.delivered,
+    'cancelled' => OrderStatus.cancelled,
+    _ => OrderStatus.open,
+  };
 }
 
 class LocationPoint {
@@ -58,6 +58,12 @@ class OrderEntity {
   final String? acceptedBidId;
   final double? acceptedBidAmount;
   final double? clientRating;
+  final String sourceType;
+  final String? storeId;
+  final String? storeName;
+  final String? storePhone;
+  final String? storeItemName;
+  final double? storeItemPrice;
   final DateTime? createdAt;
 
   const OrderEntity({
@@ -75,6 +81,12 @@ class OrderEntity {
     this.acceptedBidId,
     this.acceptedBidAmount,
     this.clientRating,
+    this.sourceType = 'direct',
+    this.storeId,
+    this.storeName,
+    this.storePhone,
+    this.storeItemName,
+    this.storeItemPrice,
     this.createdAt,
   });
 
@@ -100,6 +112,12 @@ class OrderEntity {
       acceptedBidId: acceptedBidId ?? this.acceptedBidId,
       acceptedBidAmount: acceptedBidAmount ?? this.acceptedBidAmount,
       clientRating: clientRating ?? this.clientRating,
+      sourceType: sourceType,
+      storeId: storeId,
+      storeName: storeName,
+      storePhone: storePhone,
+      storeItemName: storeItemName,
+      storeItemPrice: storeItemPrice,
       createdAt: createdAt,
     );
   }

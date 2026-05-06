@@ -18,6 +18,12 @@ class OrderModel extends OrderEntity {
     super.acceptedBidId,
     super.acceptedBidAmount,
     super.clientRating,
+    super.sourceType,
+    super.storeId,
+    super.storeName,
+    super.storePhone,
+    super.storeItemName,
+    super.storeItemPrice,
     super.createdAt,
   });
 
@@ -37,6 +43,12 @@ class OrderModel extends OrderEntity {
       acceptedBidId: order.acceptedBidId,
       acceptedBidAmount: order.acceptedBidAmount,
       clientRating: order.clientRating,
+      sourceType: order.sourceType,
+      storeId: order.storeId,
+      storeName: order.storeName,
+      storePhone: order.storePhone,
+      storeItemName: order.storeItemName,
+      storeItemPrice: order.storeItemPrice,
       createdAt: order.createdAt,
     );
   }
@@ -52,8 +64,10 @@ class OrderModel extends OrderEntity {
       clientName: data['clientName'] as String? ?? '',
       clientPhone: data['clientPhone'] as String? ?? '',
       description: data['description'] as String? ?? '',
-      pickupLocation:
-          LocationPoint(latitude: pickup.latitude, longitude: pickup.longitude),
+      pickupLocation: LocationPoint(
+        latitude: pickup.latitude,
+        longitude: pickup.longitude,
+      ),
       pickupAddress: data['pickupAddress'] as String? ?? '',
       dropoffLocation: LocationPoint(
         latitude: dropoff.latitude,
@@ -65,6 +79,12 @@ class OrderModel extends OrderEntity {
       acceptedBidId: data['acceptedBidId'] as String?,
       acceptedBidAmount: (data['acceptedBidAmount'] as num?)?.toDouble(),
       clientRating: (data['clientRating'] as num?)?.toDouble(),
+      sourceType: data['sourceType'] as String? ?? 'direct',
+      storeId: data['storeId'] as String?,
+      storeName: data['storeName'] as String?,
+      storePhone: data['storePhone'] as String?,
+      storeItemName: data['storeItemName'] as String?,
+      storeItemPrice: (data['storeItemPrice'] as num?)?.toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -75,17 +95,27 @@ class OrderModel extends OrderEntity {
       'clientName': clientName,
       'clientPhone': clientPhone,
       'description': description,
-      'pickupLocation':
-          GeoPoint(pickupLocation.latitude, pickupLocation.longitude),
+      'pickupLocation': GeoPoint(
+        pickupLocation.latitude,
+        pickupLocation.longitude,
+      ),
       'pickupAddress': pickupAddress,
-      'dropoffLocation':
-          GeoPoint(dropoffLocation.latitude, dropoffLocation.longitude),
+      'dropoffLocation': GeoPoint(
+        dropoffLocation.latitude,
+        dropoffLocation.longitude,
+      ),
       'dropoffAddress': dropoffAddress,
       'status': status.value,
       'driverId': driverId,
       'acceptedBidId': acceptedBidId,
       'acceptedBidAmount': acceptedBidAmount,
       'clientRating': clientRating,
+      'sourceType': sourceType,
+      'storeId': storeId,
+      'storeName': storeName,
+      'storePhone': storePhone,
+      'storeItemName': storeItemName,
+      'storeItemPrice': storeItemPrice,
       'updatedAt': FieldValue.serverTimestamp(),
       if (creating) 'createdAt': FieldValue.serverTimestamp(),
     };

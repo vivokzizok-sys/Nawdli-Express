@@ -31,6 +31,9 @@ class AuthSignUpRequested extends AuthEvent {
   final UserRole role;
   final VehicleType? vehicleType;
   final File? vehiclePhoto;
+  final StoreType? storeType;
+  final String? storeAddress;
+  final File? profilePhoto;
 
   const AuthSignUpRequested({
     required this.email,
@@ -40,6 +43,9 @@ class AuthSignUpRequested extends AuthEvent {
     required this.role,
     this.vehicleType,
     this.vehiclePhoto,
+    this.storeType,
+    this.storeAddress,
+    this.profilePhoto,
   });
 }
 
@@ -66,12 +72,12 @@ class AuthEmailUnverified extends AuthState {
   const AuthEmailUnverified(this.user);
   @override
   List<Object?> get props => [
-        user.uid,
-        user.isEmailVerified,
-        user.fullName,
-        user.phoneNumber,
-        user.profilePhotoBase64,
-      ];
+    user.uid,
+    user.isEmailVerified,
+    user.fullName,
+    user.phoneNumber,
+    user.profilePhotoBase64,
+  ];
 }
 
 class AuthPendingApproval extends AuthState {
@@ -79,12 +85,12 @@ class AuthPendingApproval extends AuthState {
   const AuthPendingApproval(this.user);
   @override
   List<Object?> get props => [
-        user.uid,
-        user.isApproved,
-        user.fullName,
-        user.phoneNumber,
-        user.profilePhotoBase64,
-      ];
+    user.uid,
+    user.isApproved,
+    user.fullName,
+    user.phoneNumber,
+    user.profilePhotoBase64,
+  ];
 }
 
 class AuthAuthenticated extends AuthState {
@@ -92,16 +98,16 @@ class AuthAuthenticated extends AuthState {
   const AuthAuthenticated(this.user);
   @override
   List<Object?> get props => [
-        user.uid,
-        user.role,
-        user.isApproved,
-        user.fullName,
-        user.phoneNumber,
-        user.email,
-        user.profilePhotoBase64,
-        user.rating,
-        user.totalDeliveries,
-      ];
+    user.uid,
+    user.role,
+    user.isApproved,
+    user.fullName,
+    user.phoneNumber,
+    user.email,
+    user.profilePhotoBase64,
+    user.rating,
+    user.totalDeliveries,
+  ];
 }
 
 class AuthFailureState extends AuthState {
@@ -116,8 +122,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Timer? _pollTimer;
 
   AuthBloc({required AuthRepository authRepository})
-      : _repo = authRepository,
-        super(AuthInitial()) {
+    : _repo = authRepository,
+      super(AuthInitial()) {
     on<AuthCheckRequested>(_onCheck);
     on<AuthSignInRequested>(_onSignIn);
     on<AuthSignUpRequested>(_onSignUp);
@@ -160,6 +166,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       role: event.role,
       vehicleType: event.vehicleType,
       vehiclePhoto: event.vehiclePhoto,
+      storeType: event.storeType,
+      storeAddress: event.storeAddress,
+      profilePhoto: event.profilePhoto,
     );
     result.fold(
       (failure) => emit(AuthFailureState(failure.message)),

@@ -36,9 +36,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.page(context),
       appBar: AppBar(
-        title: Text(_selectedOrderIds.isEmpty
-            ? context.t('my_orders')
-            : '${_selectedOrderIds.length}'),
+        title: Text(
+          _selectedOrderIds.isEmpty
+              ? context.t('my_orders')
+              : '${_selectedOrderIds.length}',
+        ),
         actions: [
           if (_selectedOrderIds.isNotEmpty) ...[
             IconButton(
@@ -52,6 +54,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               onPressed: () => setState(_selectedOrderIds.clear),
             ),
           ],
+          IconButton(
+            tooltip: context.t('stores'),
+            icon: const Icon(Icons.storefront_outlined),
+            onPressed: () => context.push('/client/stores'),
+          ),
           IconButton(
             tooltip: context.t('open_dashboard'),
             icon: const Icon(Icons.insights_rounded),
@@ -104,8 +111,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 TextButton.icon(
                                   onPressed: () =>
                                       _hideSelectedOrders(user.uid),
-                                  icon:
-                                      const Icon(Icons.delete_outline_rounded),
+                                  icon: const Icon(
+                                    Icons.delete_outline_rounded,
+                                  ),
                                   label: Text(context.t('delete_selected')),
                                 ),
                             ],
@@ -121,8 +129,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                             final order = state.orders[index];
                             return _OrderTile(
                               order: order,
-                              selected:
-                                  _selectedOrderIds.contains(order.orderId),
+                              selected: _selectedOrderIds.contains(
+                                order.orderId,
+                              ),
                               selectionMode: _selectedOrderIds.isNotEmpty,
                               onSelect: _canHide(order)
                                   ? () => _toggleSelection(order.orderId)
@@ -138,7 +147,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   );
                 }
                 return const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2));
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                );
               },
             ),
           ),
@@ -171,11 +181,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     final batch = FirebaseFirestore.instance.batch();
     for (final orderId in _selectedOrderIds) {
       batch.update(
-          FirebaseFirestore.instance.collection('orders').doc(orderId), {
-        'hiddenByClientIds': FieldValue.arrayUnion([clientId]),
-        'hiddenAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+        FirebaseFirestore.instance.collection('orders').doc(orderId),
+        {
+          'hiddenByClientIds': FieldValue.arrayUnion([clientId]),
+          'hiddenAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
     }
     await batch.commit();
     if (mounted) setState(_selectedOrderIds.clear);
@@ -211,13 +223,14 @@ class _ClientActiveTripBanner extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: () async {
-              final driver =
-                  await context.read<OrderBloc>().getUser(order.driverId!);
+              final driver = await context.read<OrderBloc>().getUser(
+                order.driverId!,
+              );
               if (driver == null || !context.mounted) return;
-              context.go('/active-trip', extra: {
-                'order': order,
-                'otherParty': driver,
-              });
+              context.go(
+                '/active-trip',
+                extra: {'order': order, 'otherParty': driver},
+              );
             },
             child: Container(
               padding: const EdgeInsets.all(14),
@@ -328,7 +341,9 @@ class _OrderTile extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             StatusChip(
-                label: context.statusText(order.status.value), color: color),
+              label: context.statusText(order.status.value),
+              color: color,
+            ),
             if (onDelete != null) ...[
               const SizedBox(width: 4),
               IconButton(
@@ -345,14 +360,14 @@ class _OrderTile extends StatelessWidget {
   }
 
   Color _statusColor(OrderStatus status) => switch (status) {
-        OrderStatus.requested => AppColors.info,
-        OrderStatus.priced => AppColors.warning,
-        OrderStatus.rejected => AppColors.error,
-        OrderStatus.open => AppColors.info,
-        OrderStatus.bidding => AppColors.warning,
-        OrderStatus.accepted => AppColors.accent,
-        OrderStatus.inProgress => AppColors.success,
-        OrderStatus.delivered => AppColors.grey400,
-        OrderStatus.cancelled => AppColors.error,
-      };
+    OrderStatus.requested => AppColors.info,
+    OrderStatus.priced => AppColors.warning,
+    OrderStatus.rejected => AppColors.error,
+    OrderStatus.open => AppColors.info,
+    OrderStatus.bidding => AppColors.warning,
+    OrderStatus.accepted => AppColors.accent,
+    OrderStatus.inProgress => AppColors.success,
+    OrderStatus.delivered => AppColors.grey400,
+    OrderStatus.cancelled => AppColors.error,
+  };
 }

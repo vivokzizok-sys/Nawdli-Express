@@ -89,8 +89,8 @@ class AppSettingsScope extends InheritedNotifier<AppSettingsController> {
   }) : super(notifier: controller);
 
   static AppSettingsController of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<AppSettingsScope>();
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<AppSettingsScope>();
     assert(scope != null, 'AppSettingsScope was not found in the widget tree.');
     return scope!.notifier!;
   }
@@ -99,10 +99,8 @@ class AppSettingsScope extends InheritedNotifier<AppSettingsController> {
 extension AppSettingsX on BuildContext {
   AppSettingsController get settings => AppSettingsScope.of(this);
   String t(String key) => AppStrings.translate(settings.language, key);
-  String statusText(String status) => AppStrings.translate(
-        settings.language,
-        'status_$status',
-      );
+  String statusText(String status) =>
+      AppStrings.translate(settings.language, 'status_$status');
 }
 
 class AppStrings {
@@ -193,6 +191,7 @@ class AppStrings {
     'users': 'Users',
     'clients': 'Clients',
     'drivers': 'Drivers',
+    'stores': 'Stores',
     'all': 'All',
     'no_users': 'No users',
     'no_users_found': 'No users found.',
@@ -206,6 +205,15 @@ class AppStrings {
     'already_have_account': 'I already have an account',
     'client': 'Client',
     'driver': 'Driver',
+    'store': 'Store',
+    'store_type': 'Store type',
+    'restaurant': 'Restaurant',
+    'grocery': 'Grocery',
+    'other': 'Other',
+    'store_address': 'Store address',
+    'upload_store_photo': 'Upload store photo',
+    'store_photo_required': 'Store photo is required',
+    'store_photo': 'Store photo',
     'password': 'Password',
     'vehicle': 'Vehicle',
     'bike': 'Bike',
@@ -310,9 +318,28 @@ class AppStrings {
     'driver_approval_body':
         'Your account and vehicle photo are under admin review.',
     'client_approval_body': 'Your account is under admin review.',
+    'store_approval_body': 'Your store account is under admin review.',
     'refresh_status': 'Refresh Status',
     'driver_dashboard': 'Driver dashboard',
     'client_dashboard': 'Client dashboard',
+    'store_dashboard': 'Store dashboard',
+    'store_profile': 'Store profile',
+    'store_not_found': 'Store not found',
+    'no_stores': 'No stores available',
+    'no_stores_body': 'Approved stores will appear here.',
+    'call_store': 'Call store',
+    'menu_items': 'Menu items',
+    'add_menu_item': 'Add menu item',
+    'add_first_menu_item': 'Add your first product to the menu.',
+    'no_menu_items': 'No menu items',
+    'store_menu_empty': 'This store has not added menu items yet.',
+    'item_name': 'Item name',
+    'item_price': 'Item price',
+    'store_orders': 'Store orders',
+    'store_orders_empty': 'Orders from clients will appear here.',
+    'store_order': 'Store order',
+    'send_store_order': 'Send store order',
+    'order_notes': 'Order notes',
     'total_orders': 'Total orders',
     'active_orders': 'Active',
     'completed_orders': 'Completed',
@@ -599,6 +626,52 @@ class AppStrings {
         '\u0644\u0627 \u062a\u0648\u062c\u062f \u0627\u062a\u0635\u0627\u0644\u0627\u062a \u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642 \u0628\u0639\u062f.',
     'called_from_app':
         '\u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642',
+    'stores': '\u0627\u0644\u0645\u062d\u0644\u0627\u062a',
+    'store': '\u0645\u062d\u0644',
+    'store_type': '\u0646\u0648\u0639 \u0627\u0644\u0645\u062d\u0644',
+    'restaurant': '\u0645\u0637\u0639\u0645',
+    'grocery': '\u0645\u0648\u0627\u062f \u063a\u0630\u0627\u0626\u064a\u0629',
+    'other': '\u0623\u062e\u0631\u0649',
+    'store_address':
+        '\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0645\u062d\u0644',
+    'upload_store_photo':
+        '\u0631\u0641\u0639 \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u062d\u0644',
+    'store_photo_required':
+        '\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u062d\u0644 \u0645\u0637\u0644\u0648\u0628\u0629',
+    'store_photo': '\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u062d\u0644',
+    'store_approval_body':
+        '\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u062d\u0644 \u0642\u064a\u062f \u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.',
+    'store_dashboard':
+        '\u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u062d\u0644',
+    'store_profile':
+        '\u0628\u0631\u0648\u0641\u0627\u064a\u0644 \u0627\u0644\u0645\u062d\u0644',
+    'store_not_found':
+        '\u0627\u0644\u0645\u062d\u0644 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f',
+    'no_stores':
+        '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u062d\u0644\u0627\u062a \u0645\u062a\u0627\u062d\u0629',
+    'no_stores_body':
+        '\u0633\u062a\u0638\u0647\u0631 \u0627\u0644\u0645\u062d\u0644\u0627\u062a \u0627\u0644\u0645\u0642\u0628\u0648\u0644\u0629 \u0647\u0646\u0627.',
+    'call_store':
+        '\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0645\u062d\u0644',
+    'menu_items': '\u0627\u0644\u0645\u0646\u064a\u0648',
+    'add_menu_item': '\u0625\u0636\u0627\u0641\u0629 \u0645\u0646\u062a\u062c',
+    'add_first_menu_item':
+        '\u0623\u0636\u0641 \u0623\u0648\u0644 \u0645\u0646\u062a\u062c \u0625\u0644\u0649 \u0627\u0644\u0645\u0646\u064a\u0648.',
+    'no_menu_items':
+        '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a',
+    'store_menu_empty':
+        '\u0647\u0630\u0627 \u0627\u0644\u0645\u062d\u0644 \u0644\u0645 \u064a\u0636\u0641 \u0645\u0646\u062a\u062c\u0627\u062a \u0628\u0639\u062f.',
+    'item_name': '\u0627\u0633\u0645 \u0627\u0644\u0645\u0646\u062a\u062c',
+    'item_price': '\u0633\u0639\u0631 \u0627\u0644\u0645\u0646\u062a\u062c',
+    'store_orders':
+        '\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0645\u062d\u0644',
+    'store_orders_empty':
+        '\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0632\u0628\u0627\u0626\u0646 \u0633\u062a\u0638\u0647\u0631 \u0647\u0646\u0627.',
+    'store_order': '\u0637\u0644\u0628 \u0645\u0646 \u0645\u062d\u0644',
+    'send_store_order':
+        '\u0625\u0631\u0633\u0627\u0644 \u0637\u0644\u0628 \u0627\u0644\u0645\u062d\u0644',
+    'order_notes':
+        '\u0645\u0644\u0627\u062d\u0638\u0627\u062a \u0627\u0644\u0637\u0644\u0628',
     'update_required':
         '\u062a\u062d\u062f\u064a\u062b \u0645\u0637\u0644\u0648\u0628',
     'update_required_body':

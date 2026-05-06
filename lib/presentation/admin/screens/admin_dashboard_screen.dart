@@ -42,34 +42,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return Scaffold(
       backgroundColor: AppColors.page(context),
       appBar: AppBar(
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceAlt(context),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              context.t('admin').toUpperCase(),
-              style: AppTextStyles.label.copyWith(
-                color: AppColors.textPrimary(context),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAlt(context),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                context.t('admin').toUpperCase(),
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.textPrimary(context),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Text(context.t('dashboard')),
-        ]),
-        actions: [
-          AppMenuButton(user: user),
-        ],
+            const SizedBox(width: 10),
+            Text(context.t('dashboard')),
+          ],
+        ),
+        actions: [AppMenuButton(user: user)],
         bottom: TabBar(
           controller: _tabCtrl,
           isScrollable: true,
           labelColor: AppColors.accent,
           unselectedLabelColor: AppColors.grey400,
           indicatorColor: AppColors.accent,
-          labelStyle:
-              AppTextStyles.captionMedium.copyWith(fontWeight: FontWeight.w700),
+          labelStyle: AppTextStyles.captionMedium.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
           tabs: [
             Tab(text: context.t('approvals')),
             Tab(text: context.t('orders')),
@@ -128,11 +129,7 @@ class _ApprovalsTab extends StatelessWidget {
           itemBuilder: (_, i) {
             final data = docs[i].data() as Map<String, dynamic>;
             final uid = docs[i].id;
-            return _PendingUserCard(
-              uid: uid,
-              data: data,
-              db: db,
-            );
+            return _PendingUserCard(uid: uid, data: data, db: db);
           },
         );
       },
@@ -145,8 +142,11 @@ class _PendingUserCard extends StatefulWidget {
   final Map<String, dynamic> data;
   final FirebaseFirestore db;
 
-  const _PendingUserCard(
-      {required this.uid, required this.data, required this.db});
+  const _PendingUserCard({
+    required this.uid,
+    required this.data,
+    required this.db,
+  });
 
   @override
   State<_PendingUserCard> createState() => _PendingUserCardState();
@@ -178,9 +178,17 @@ class _PendingUserCardState extends State<_PendingUserCard> {
     final name = widget.data['fullName'] as String? ?? context.t('unknown');
     final email = widget.data['email'] as String? ?? '';
     final role = widget.data['role'] as String? ?? 'client';
-    final photoBase64 = widget.data['vehiclePhotoBase64'] as String?;
+    final photoBase64 = role == 'store'
+        ? widget.data['profilePhotoBase64'] as String?
+        : widget.data['vehiclePhotoBase64'] as String?;
     final vehicleType = widget.data['vehicleType'] as String?;
     final isDriver = role == 'driver';
+    final isStore = role == 'store';
+    final roleColor = isDriver
+        ? AppColors.driverRole
+        : isStore
+        ? AppColors.accent
+        : AppColors.clientRole;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -195,52 +203,61 @@ class _PendingUserCardState extends State<_PendingUserCard> {
           // Header
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(children: [
-              // Avatar
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: isDriver
-                      ? AppColors.driverRole.withOpacity(0.1)
-                      : AppColors.clientRole.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                    child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: AppTextStyles.title3.copyWith(
-                    color:
-                        isDriver ? AppColors.driverRole : AppColors.clientRole,
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: isDriver
+                        ? AppColors.driverRole.withOpacity(0.1)
+                        : isStore
+                        ? AppColors.accent.withOpacity(0.1)
+                        : AppColors.clientRole.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                )),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+                  child: Center(
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: AppTextStyles.title3.copyWith(color: roleColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
                   child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: AppTextStyles.bodyMedium),
-                  Text(email, style: AppTextStyles.caption),
-                  const SizedBox(height: 3),
-                  _RoleBadge(role: role, vehicleType: vehicleType),
-                ],
-              )),
-            ]),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name, style: AppTextStyles.bodyMedium),
+                      Text(email, style: AppTextStyles.caption),
+                      const SizedBox(height: 3),
+                      _RoleBadge(role: role, vehicleType: vehicleType),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // Vehicle Photo (drivers only)
-          if (isDriver && photoBase64 != null && photoBase64.isNotEmpty) ...[
+          if ((isDriver || isStore) &&
+              photoBase64 != null &&
+              photoBase64.isNotEmpty) ...[
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(context.t('vehicle_photo'),
-                      style: AppTextStyles.captionMedium.copyWith(
-                          color: AppColors.textSecondary(context),
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    isDriver
+                        ? context.t('vehicle_photo')
+                        : context.t('store_photo'),
+                    style: AppTextStyles.captionMedium.copyWith(
+                      color: AppColors.textSecondary(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -269,41 +286,49 @@ class _PendingUserCardState extends State<_PendingUserCard> {
           // Actions
           Container(
             decoration: BoxDecoration(
-                border:
-                    Border(top: BorderSide(color: AppColors.border(context)))),
+              border: Border(top: BorderSide(color: AppColors.border(context))),
+            ),
             child: _loading
                 ? const Padding(
                     padding: EdgeInsets.all(20),
                     child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2)),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   )
-                : Row(children: [
-                    // Reject
-                    Expanded(
+                : Row(
+                    children: [
+                      // Reject
+                      Expanded(
                         child: TextButton.icon(
-                      onPressed: () => _setApproval(false),
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: Text(context.t('reject')),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                          onPressed: () => _setApproval(false),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          label: Text(context.t('reject')),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
                       ),
-                    )),
-                    Container(
-                        width: 1, height: 44, color: AppColors.border(context)),
-                    // Approve
-                    Expanded(
+                      Container(
+                        width: 1,
+                        height: 44,
+                        color: AppColors.border(context),
+                      ),
+                      // Approve
+                      Expanded(
                         child: TextButton.icon(
-                      onPressed: () => _setApproval(true),
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: Text(context.t('approve')),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.success,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: AppTextStyles.buttonSmall,
+                          onPressed: () => _setApproval(true),
+                          icon: const Icon(Icons.check_rounded, size: 18),
+                          label: Text(context.t('approve')),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.success,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            textStyle: AppTextStyles.buttonSmall,
+                          ),
+                        ),
                       ),
-                    )),
-                  ]),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -321,16 +346,23 @@ class _RoleBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDriver = role == 'driver';
     final isAdmin = role == 'admin';
+    final isStore = role == 'store';
     final color = isDriver
         ? AppColors.driverRole
+        : isStore
+        ? AppColors.accent
         : isAdmin
-            ? AppColors.textPrimary(context)
-            : AppColors.clientRole;
-    final roleLabel = context.t(isDriver
-        ? 'driver'
-        : isAdmin
-            ? 'admin'
-            : 'client');
+        ? AppColors.textPrimary(context)
+        : AppColors.clientRole;
+    final roleLabel = context.t(
+      isDriver
+          ? 'driver'
+          : isStore
+          ? 'store'
+          : isAdmin
+          ? 'admin'
+          : 'client',
+    );
     final vehicleLabel = vehicleType == null ? null : context.t(vehicleType!);
     final label = isDriver
         ? '$roleLabel${vehicleLabel != null ? ' · $vehicleLabel' : ''}'
@@ -342,9 +374,13 @@ class _RoleBadge extends StatelessWidget {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: AppTextStyles.caption
-              .copyWith(color: color, fontWeight: FontWeight.w700)),
+      child: Text(
+        label,
+        style: AppTextStyles.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
@@ -420,22 +456,27 @@ class _OrdersTabState extends State<_OrdersTab> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   margin: const EdgeInsets.only(right: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.accent
                         : AppColors.surface(context),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: selected ? AppColors.accent : AppColors.grey200),
+                      color: selected ? AppColors.accent : AppColors.grey200,
+                    ),
                   ),
-                  child: Text(e.value,
-                      style: AppTextStyles.captionMedium.copyWith(
-                        color: selected
-                            ? AppColors.white
-                            : AppColors.textSecondary(context),
-                      )),
+                  child: Text(
+                    e.value,
+                    style: AppTextStyles.captionMedium.copyWith(
+                      color: selected
+                          ? AppColors.white
+                          : AppColors.textSecondary(context),
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -507,63 +548,81 @@ class _AdminOrderRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border(context)),
       ),
-      child: Row(children: [
-        Container(
-          width: 8,
-          height: 44,
-          decoration: BoxDecoration(
-            color: statusColor,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('#${orderId.substring(0, 8).toUpperCase()}',
-                style: AppTextStyles.captionMedium
-                    .copyWith(color: AppColors.grey500)),
-            Text(desc,
-                style: AppTextStyles.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-          ],
-        )),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+      child: Row(
+        children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            width: 8,
+            height: 44,
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
+              color: statusColor,
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(context.statusText(status),
-                style: AppTextStyles.caption
-                    .copyWith(color: statusColor, fontWeight: FontWeight.w700)),
           ),
-          if (amount != null) ...[
-            const SizedBox(height: 3),
-            Text(CurrencyFormatter.da(amount),
-                style: AppTextStyles.captionMedium
-                    .copyWith(color: AppColors.success)),
-          ],
-        ]),
-      ]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '#${orderId.substring(0, 8).toUpperCase()}',
+                  style: AppTextStyles.captionMedium.copyWith(
+                    color: AppColors.grey500,
+                  ),
+                ),
+                Text(
+                  desc,
+                  style: AppTextStyles.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  context.statusText(status),
+                  style: AppTextStyles.caption.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (amount != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  CurrencyFormatter.da(amount),
+                  style: AppTextStyles.captionMedium.copyWith(
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Color _statusColor(String s) => switch (s) {
-        'requested' => AppColors.info,
-        'priced' => AppColors.warning,
-        'rejected' => AppColors.error,
-        'open' => AppColors.info,
-        'bidding' => AppColors.warning,
-        'accepted' => AppColors.accent,
-        'inProgress' => AppColors.success,
-        'delivered' => AppColors.grey400,
-        'cancelled' => AppColors.error,
-        _ => AppColors.grey400,
-      };
+    'requested' => AppColors.info,
+    'priced' => AppColors.warning,
+    'rejected' => AppColors.error,
+    'open' => AppColors.info,
+    'bidding' => AppColors.warning,
+    'accepted' => AppColors.accent,
+    'inProgress' => AppColors.success,
+    'delivered' => AppColors.grey400,
+    'cancelled' => AppColors.error,
+    _ => AppColors.grey400,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -585,53 +644,63 @@ class _UsersTabState extends State<_UsersTab> {
   Widget build(BuildContext context) {
     Query query = _roleFilter == 'all'
         ? widget.db
-            .collection('users')
-            .orderBy('createdAt', descending: true)
-            .limit(150)
+              .collection('users')
+              .orderBy('createdAt', descending: true)
+              .limit(150)
         : widget.db
-            .collection('users')
-            .where('role', isEqualTo: _roleFilter)
-            .limit(150);
+              .collection('users')
+              .where('role', isEqualTo: _roleFilter)
+              .limit(150);
 
     return Column(
       children: [
         // Role filter
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Row(children: [
-            for (final entry in {
-              'all': context.t('all'),
-              'client': context.t('clients'),
-              'driver': context.t('drivers'),
-            }.entries)
-              Expanded(
+          child: Row(
+            children: [
+              for (final entry in {
+                'all': context.t('all'),
+                'client': context.t('clients'),
+                'driver': context.t('drivers'),
+                'store': context.t('stores'),
+              }.entries)
+                Expanded(
                   child: Padding(
-                padding: EdgeInsets.only(right: entry.key != 'driver' ? 8 : 0),
-                child: GestureDetector(
-                  onTap: () => setState(() => _roleFilter = entry.key),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _roleFilter == entry.key
-                          ? AppColors.accent
-                          : AppColors.surface(context),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
+                    padding: EdgeInsets.only(
+                      right: entry.key != 'store' ? 8 : 0,
+                    ),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _roleFilter = entry.key),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
                           color: _roleFilter == entry.key
                               ? AppColors.accent
-                              : AppColors.grey200),
-                    ),
-                    child: Text(entry.value,
-                        style: AppTextStyles.captionMedium.copyWith(
+                              : AppColors.surface(context),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _roleFilter == entry.key
+                                ? AppColors.accent
+                                : AppColors.grey200,
+                          ),
+                        ),
+                        child: Text(
+                          entry.value,
+                          style: AppTextStyles.captionMedium.copyWith(
                             color: _roleFilter == entry.key
                                 ? AppColors.white
-                                : AppColors.textSecondary(context)),
-                        textAlign: TextAlign.center),
+                                : AppColors.textSecondary(context),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              )),
-          ]),
+            ],
+          ),
         ),
 
         // List
@@ -689,9 +758,11 @@ class _UserRow extends StatelessWidget {
 
     final roleColor = role == 'driver'
         ? AppColors.driverRole
+        : role == 'store'
+        ? AppColors.accent
         : role == 'admin'
-            ? AppColors.adminRole
-            : AppColors.clientRole;
+        ? AppColors.adminRole
+        : AppColors.clientRole;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -701,87 +772,106 @@ class _UserRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border(context)),
       ),
-      child: Row(children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: roleColor.withOpacity(0.1),
-          backgroundImage:
-              profilePhotoBase64 == null || profilePhotoBase64.isEmpty
-                  ? null
-                  : MemoryImage(base64Decode(profilePhotoBase64)),
-          child: profilePhotoBase64 != null && profilePhotoBase64.isNotEmpty
-              ? null
-              : Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: AppTextStyles.bodyMedium.copyWith(color: roleColor),
-                ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(name, style: AppTextStyles.bodyMedium),
-            Text(email,
-                style: AppTextStyles.caption,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-            if (role == 'driver')
-              Text(
-                  '⭐ ${rating.toStringAsFixed(1)} · $deliveries ${context.t('trips_label')}',
-                  style: AppTextStyles.caption),
-            if (role == 'driver')
-              TextButton.icon(
-                onPressed: () => _showDriverComments(context, db, uid),
-                icon: const Icon(Icons.rate_review_outlined, size: 16),
-                label: Text(context.t('comments')),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.accent,
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-          ],
-        )),
-
-        // Approval toggle
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          _RoleBadge(role: role),
-          const SizedBox(height: 4),
-          GestureDetector(
-            onTap: () => db.collection('users').doc(uid).update({
-              'isApproved': !isApproved,
-            }),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: isApproved
-                    ? AppColors.success.withOpacity(0.1)
-                    : AppColors.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(
-                  isApproved
-                      ? Icons.check_circle_rounded
-                      : Icons.cancel_rounded,
-                  color: isApproved ? AppColors.success : AppColors.error,
-                  size: 12,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  isApproved ? context.t('approved') : context.t('blocked'),
-                  style: AppTextStyles.caption.copyWith(
-                    color: isApproved ? AppColors.success : AppColors.error,
-                    fontWeight: FontWeight.w700,
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: roleColor.withOpacity(0.1),
+            backgroundImage:
+                profilePhotoBase64 == null || profilePhotoBase64.isEmpty
+                ? null
+                : MemoryImage(base64Decode(profilePhotoBase64)),
+            child: profilePhotoBase64 != null && profilePhotoBase64.isNotEmpty
+                ? null
+                : Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: AppTextStyles.bodyMedium.copyWith(color: roleColor),
                   ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: AppTextStyles.bodyMedium),
+                Text(
+                  email,
+                  style: AppTextStyles.caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ]),
+                if (role == 'driver')
+                  Text(
+                    '⭐ ${rating.toStringAsFixed(1)} · $deliveries ${context.t('trips_label')}',
+                    style: AppTextStyles.caption,
+                  ),
+                if (role == 'driver')
+                  TextButton.icon(
+                    onPressed: () => _showDriverComments(context, db, uid),
+                    icon: const Icon(Icons.rate_review_outlined, size: 16),
+                    label: Text(context.t('comments')),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+              ],
             ),
           ),
-        ]),
-      ]),
+
+          // Approval toggle
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _RoleBadge(role: role),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => db.collection('users').doc(uid).update({
+                  'isApproved': !isApproved,
+                }),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isApproved
+                        ? AppColors.success.withOpacity(0.1)
+                        : AppColors.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isApproved
+                            ? Icons.check_circle_rounded
+                            : Icons.cancel_rounded,
+                        color: isApproved ? AppColors.success : AppColors.error,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isApproved
+                            ? context.t('approved')
+                            : context.t('blocked'),
+                        style: AppTextStyles.caption.copyWith(
+                          color: isApproved
+                              ? AppColors.success
+                              : AppColors.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -809,10 +899,7 @@ class _DriverCommentsSheet extends StatelessWidget {
   final FirebaseFirestore db;
   final String driverId;
 
-  const _DriverCommentsSheet({
-    required this.db,
-    required this.driverId,
-  });
+  const _DriverCommentsSheet({required this.db, required this.driverId});
 
   @override
   Widget build(BuildContext context) {
@@ -858,11 +945,11 @@ class _DriverCommentsSheet extends StatelessWidget {
                       data: doc.data(),
                       onDelete: () =>
                           db.collection('orders').doc(doc.id).update({
-                        'clientRatingComment': null,
-                        'commentDeletedByAdmin': true,
-                        'commentDeletedAt': FieldValue.serverTimestamp(),
-                        'updatedAt': FieldValue.serverTimestamp(),
-                      }),
+                            'clientRatingComment': null,
+                            'commentDeletedByAdmin': true,
+                            'commentDeletedAt': FieldValue.serverTimestamp(),
+                            'updatedAt': FieldValue.serverTimestamp(),
+                          }),
                     ),
               ],
             );
@@ -897,37 +984,42 @@ class _AdminCommentRow extends StatelessWidget {
         color: AppColors.surfaceAlt(context),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(
-            child: Text(
-              '$clientName - ${rating.toStringAsFixed(1)}',
-              style: AppTextStyles.captionMedium.copyWith(
-                color: AppColors.textPrimary(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$clientName - ${rating.toStringAsFixed(1)}',
+                  style: AppTextStyles.captionMedium.copyWith(
+                    color: AppColors.textPrimary(context),
+                  ),
+                ),
               ),
+              IconButton(
+                tooltip: context.t('delete_comment'),
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+                color: AppColors.error,
+              ),
+            ],
+          ),
+          Text(
+            comment,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textPrimary(context),
             ),
           ),
-          IconButton(
-            tooltip: context.t('delete_comment'),
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline_rounded),
-            color: AppColors.error,
+          const SizedBox(height: 6),
+          Text(
+            '${context.t('order')}: ${orderId.substring(0, 8).toUpperCase()}',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
           ),
-        ]),
-        Text(
-          comment,
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.textPrimary(context),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '${context.t('order')}: ${orderId.substring(0, 8).toUpperCase()}',
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textSecondary(context),
-          ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -1031,8 +1123,9 @@ class _TicketCard extends StatelessWidget {
                 ),
               ),
               StatusChip(
-                label:
-                    isOpen ? context.statusText('open') : context.t('closed'),
+                label: isOpen
+                    ? context.statusText('open')
+                    : context.t('closed'),
                 color: isOpen ? AppColors.warning : AppColors.success,
               ),
             ],
@@ -1101,21 +1194,21 @@ class _TicketCard extends StatelessWidget {
                   onPressed: createdBy == null
                       ? null
                       : () => _replyToTicket(
-                            context,
-                            db,
-                            ticketId: ticketId,
-                            userId: createdBy,
-                          ),
+                          context,
+                          db,
+                          ticketId: ticketId,
+                          userId: createdBy,
+                        ),
                   icon: const Icon(Icons.reply_rounded),
                   label: Text(context.t('reply')),
                 ),
                 TextButton.icon(
                   onPressed: () =>
                       db.collection('support_tickets').doc(ticketId).update({
-                    'status': 'closed',
-                    'closedAt': FieldValue.serverTimestamp(),
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  }),
+                        'status': 'closed',
+                        'closedAt': FieldValue.serverTimestamp(),
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      }),
                   icon: const Icon(Icons.check_circle_outline_rounded),
                   label: Text(context.t('close_ticket')),
                 ),
@@ -1234,9 +1327,12 @@ class _EmptyAdminState extends StatelessWidget {
           const SizedBox(height: 16),
           Text(title, style: AppTextStyles.title3),
           const SizedBox(height: 6),
-          Text(subtitle,
-              style: AppTextStyles.body
-                  .copyWith(color: AppColors.textSecondary(context))),
+          Text(
+            subtitle,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
+          ),
         ],
       ),
     );

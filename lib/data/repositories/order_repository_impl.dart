@@ -21,10 +21,13 @@ class OrderRepositoryImpl implements OrderRepository {
       final ref = order.orderId.isEmpty
           ? _db.collection('orders').doc()
           : _db.collection('orders').doc(order.orderId);
-      final model = OrderModel.fromEntity(order.copyWith(
-        status:
-            order.driverId == null ? OrderStatus.open : OrderStatus.requested,
-      ));
+      final model = OrderModel.fromEntity(
+        order.copyWith(
+          status: order.driverId == null
+              ? OrderStatus.open
+              : OrderStatus.requested,
+        ),
+      );
       await ref.set({
         ...model.toFirestore(creating: true),
         'clientId': order.clientId,
@@ -37,6 +40,19 @@ class OrderRepositoryImpl implements OrderRepository {
           'type': 'direct_request',
           'title': 'New delivery request',
           'body': '${order.clientName} sent you a delivery request.',
+          'createdBy': order.clientId,
+          'read': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      if (order.storeId != null) {
+        await _db.collection('notifications').add({
+          'userId': order.storeId,
+          'orderId': ref.id,
+          'type': 'store_order',
+          'title': 'New store order',
+          'body':
+              '${order.clientName} ordered ${order.storeItemName ?? order.description}.',
           'createdBy': order.clientId,
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
@@ -58,13 +74,17 @@ class OrderRepositoryImpl implements OrderRepository {
         .where('clientId', isEqualTo: clientId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map(OrderModel.fromFirestore).where((order) {
-              final hiddenBy = snap.docs
-                      .firstWhere((doc) => doc.id == order.orderId)
-                      .data()['hiddenByClientIds'] as List<dynamic>? ??
-                  const [];
-              return !hiddenBy.contains(clientId);
-            }).toList());
+        .map(
+          (snap) => snap.docs.map(OrderModel.fromFirestore).where((order) {
+            final hiddenBy =
+                snap.docs
+                        .firstWhere((doc) => doc.id == order.orderId)
+                        .data()['hiddenByClientIds']
+                    as List<dynamic>? ??
+                const [];
+            return !hiddenBy.contains(clientId);
+          }).toList(),
+        );
   }
 
   @override
@@ -83,15 +103,18 @@ class OrderRepositoryImpl implements OrderRepository {
     return _db
         .collection('orders')
         .where('driverId', isEqualTo: driverId)
-        .where('status', whereIn: [
-          'requested',
-          'priced',
-          'accepted',
-          'inProgress',
-          'delivered',
-          'rejected',
-          'cancelled',
-        ])
+        .where(
+          'status',
+          whereIn: [
+            'requested',
+            'priced',
+            'accepted',
+            'inProgress',
+            'delivered',
+            'rejected',
+            'cancelled',
+          ],
+        )
         .orderBy('createdAt', descending: true)
         .limit(100)
         .snapshots()
@@ -114,9 +137,11 @@ class OrderRepositoryImpl implements OrderRepository {
         .collection('bids')
         .orderBy('amount')
         .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => BidModel.fromFirestore(orderId: orderId, doc: doc))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((doc) => BidModel.fromFirestore(orderId: orderId, doc: doc))
+              .toList(),
+        );
   }
 
   @override
@@ -252,7 +277,9 @@ class OrderRepositoryImpl implements OrderRepository {
         final orderSnap = await tx.get(orderRef);
         if (!orderSnap.exists) {
           throw FirebaseException(
-              plugin: 'firestore', message: 'Order not found');
+            plugin: 'firestore',
+            message: 'Order not found',
+          );
         }
         final orderData = orderSnap.data() as Map<String, dynamic>;
         final status = orderData['status'] as String? ?? 'open';
@@ -308,9 +335,9 @@ class OrderRepositoryImpl implements OrderRepository {
           .collection('bids')
           .doc(bidId)
           .update({
-        'status': 'rejected',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'status': 'rejected',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left(NetworkFailure(e.message ?? 'Failed to reject bid'));

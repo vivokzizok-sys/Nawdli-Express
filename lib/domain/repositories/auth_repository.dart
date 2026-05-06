@@ -17,6 +17,9 @@ abstract class AuthRepository {
     required UserRole role,
     VehicleType? vehicleType,
     File? vehiclePhoto,
+    StoreType? storeType,
+    String? storeAddress,
+    File? profilePhoto,
   });
   Future<Either<Failure, void>> resendEmailVerification();
   Future<Either<Failure, void>> signOut();

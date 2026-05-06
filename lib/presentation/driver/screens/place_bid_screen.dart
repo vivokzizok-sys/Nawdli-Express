@@ -37,9 +37,9 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
       listener: (context, state) {
         if (state is BidPlaced) context.go('/driver/home');
         if (state is OrderError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
@@ -104,8 +104,8 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                       : context.t('delivery_price'),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                        decimal: true,
+                                      ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
                                       return context.t('field_required');
@@ -128,17 +128,17 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                     if (!_formKey.currentState!.validate()) {
                                       return;
                                     }
-                                    final driver = (context
-                                            .read<AuthBloc>()
-                                            .state as AuthAuthenticated)
-                                        .user;
-                                    context
-                                        .read<OrderBloc>()
-                                        .add(OrderBidPlaceRequested(
-                                          orderId: widget.orderId,
-                                          driver: driver,
-                                          amount: double.parse(_amount.text),
-                                        ));
+                                    final driver =
+                                        (context.read<AuthBloc>().state
+                                                as AuthAuthenticated)
+                                            .user;
+                                    context.read<OrderBloc>().add(
+                                      OrderBidPlaceRequested(
+                                        orderId: widget.orderId,
+                                        driver: driver,
+                                        amount: double.parse(_amount.text),
+                                      ),
+                                    );
                                   },
                                 ),
                               ] else if (order?.status ==
@@ -153,10 +153,13 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                     if (client == null || !context.mounted) {
                                       return;
                                     }
-                                    context.go('/active-trip', extra: {
-                                      'order': order,
-                                      'otherParty': client,
-                                    });
+                                    context.go(
+                                      '/active-trip',
+                                      extra: {
+                                        'order': order,
+                                        'otherParty': client,
+                                      },
+                                    );
                                   },
                                 ),
                               ] else if (order?.status ==
@@ -209,6 +212,18 @@ class _OrderRouteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(order.description, style: AppTextStyles.title3),
+          if (order.sourceType == 'store' && order.storeName != null) ...[
+            const SizedBox(height: 10),
+            _RouteLine(
+              icon: Icons.storefront_outlined,
+              color: AppColors.accent,
+              label: context.t('store'),
+              value: [
+                order.storeName!,
+                if ((order.storePhone ?? '').isNotEmpty) order.storePhone!,
+              ].join(' - '),
+            ),
+          ],
           const SizedBox(height: 12),
           _RouteLine(
             icon: Icons.location_on_rounded,

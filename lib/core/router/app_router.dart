@@ -20,11 +20,15 @@ import '../../presentation/client/screens/client_dashboard_screen.dart';
 import '../../presentation/client/screens/order_detail_screen.dart';
 import '../../presentation/client/screens/driver_profile_screen.dart';
 import '../../presentation/client/screens/drivers_screen.dart';
+import '../../presentation/client/screens/store_order_screen.dart';
+import '../../presentation/client/screens/store_profile_screen.dart';
+import '../../presentation/client/screens/stores_screen.dart';
 import '../../presentation/driver/screens/driver_dashboard_screen.dart';
 import '../../presentation/driver/screens/driver_home_screen.dart';
 import '../../presentation/driver/screens/place_bid_screen.dart';
 import '../../presentation/legal/screens/legal_screen.dart';
 import '../../presentation/settings/screens/settings_screen.dart';
+import '../../presentation/store/screens/store_home_screen.dart';
 import '../../presentation/support/screens/support_screen.dart';
 import '../../presentation/tracking/screens/active_trip_screen.dart';
 
@@ -39,12 +43,17 @@ class AppRoutes {
   static const clientDashboard = '/client/dashboard';
   static const drivers = '/client/drivers';
   static const driverProfile = '/client/driver-profile';
+  static const stores = '/client/stores';
+  static const storeProfile = '/client/store-profile';
+  static const storeOrder = '/client/store-order';
   static const createOrder = '/client/create-order';
   static const orderDetail = '/client/order/:orderId';
 
   static const driverHome = '/driver/home';
   static const driverDashboard = '/driver/dashboard';
   static const placeBid = '/driver/bid/:orderId';
+
+  static const storeHome = '/store/home';
 
   static const activeTrip = '/active-trip';
   static const adminDashboard = '/admin/dashboard';
@@ -104,13 +113,19 @@ class AppRouter {
               authState.user.role != UserRole.client) {
             return _homeForRole(authState.user.role);
           }
+          if (loc.startsWith('/store') &&
+              authState.user.role != UserRole.store) {
+            return _homeForRole(authState.user.role);
+          }
         }
 
         return null;
       },
       routes: [
         GoRoute(
-            path: AppRoutes.splash, builder: (_, __) => const SplashScreen()),
+          path: AppRoutes.splash,
+          builder: (_, __) => const SplashScreen(),
+        ),
         GoRoute(
           path: AppRoutes.login,
           pageBuilder: (_, state) => _fade(state, const LoginScreen()),
@@ -166,6 +181,46 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: AppRoutes.stores,
+          pageBuilder: (_, state) => _slide(state, const StoresScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.storeProfile,
+          pageBuilder: (_, state) {
+            final store = state.extra as UserEntity?;
+            if (store == null) {
+              return _fade(
+                state,
+                Builder(
+                  builder: (context) => Scaffold(
+                    body: Center(child: Text(context.t('store_not_found'))),
+                  ),
+                ),
+              );
+            }
+            return _slide(state, StoreProfileScreen(store: store));
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.storeOrder,
+          pageBuilder: (_, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            final store = extra?['store'] as UserEntity?;
+            final item = extra?['item'] as Map<String, dynamic>?;
+            if (store == null || item == null) {
+              return _fade(
+                state,
+                Builder(
+                  builder: (context) => Scaffold(
+                    body: Center(child: Text(context.t('order_missing'))),
+                  ),
+                ),
+              );
+            }
+            return _slide(state, StoreOrderScreen(store: store, item: item));
+          },
+        ),
+        GoRoute(
           path: AppRoutes.createOrder,
           pageBuilder: (_, state) => _slide(
             state,
@@ -194,6 +249,10 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: AppRoutes.storeHome,
+          pageBuilder: (_, state) => _fade(state, const StoreHomeScreen()),
+        ),
+        GoRoute(
           path: AppRoutes.activeTrip,
           pageBuilder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
@@ -201,9 +260,7 @@ class AppRouter {
               return _fade(
                 state,
                 Scaffold(
-                  body: Center(
-                    child: Text(context.t('active_trip_missing')),
-                  ),
+                  body: Center(child: Text(context.t('active_trip_missing'))),
                 ),
               );
             }
@@ -256,10 +313,11 @@ class AppRouter {
   }
 
   static String _homeForRole(UserRole role) => switch (role) {
-        UserRole.client => AppRoutes.clientHome,
-        UserRole.driver => AppRoutes.driverHome,
-        UserRole.admin => AppRoutes.adminDashboard,
-      };
+    UserRole.client => AppRoutes.clientHome,
+    UserRole.driver => AppRoutes.driverHome,
+    UserRole.store => AppRoutes.storeHome,
+    UserRole.admin => AppRoutes.adminDashboard,
+  };
 
   static CustomTransitionPage _fade(GoRouterState state, Widget child) {
     return CustomTransitionPage(

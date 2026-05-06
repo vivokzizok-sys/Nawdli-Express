@@ -26,9 +26,12 @@ class _SignupScreenState extends State<SignupScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _password = TextEditingController();
+  final _storeAddress = TextEditingController();
   UserRole _role = UserRole.client;
   VehicleType _vehicleType = VehicleType.bike;
+  StoreType _storeType = StoreType.restaurant;
   File? _vehiclePhoto;
+  File? _storePhoto;
 
   @override
   void dispose() {
@@ -36,6 +39,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _email.dispose();
     _phone.dispose();
     _password.dispose();
+    _storeAddress.dispose();
     super.dispose();
   }
 
@@ -49,14 +53,24 @@ class _SignupScreenState extends State<SignupScreen> {
     if (picked != null) setState(() => _vehiclePhoto = File(picked.path));
   }
 
+  Future<void> _pickStorePhoto() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 55,
+      maxWidth: 900,
+      maxHeight: 900,
+    );
+    if (picked != null) setState(() => _storePhoto = File(picked.path));
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthFailureState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
@@ -77,8 +91,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(context.t('create_account'),
-                        style: AppTextStyles.title1),
+                    Text(
+                      context.t('create_account'),
+                      style: AppTextStyles.title1,
+                    ),
                     const SizedBox(height: 20),
                     SegmentedButton<UserRole>(
                       segments: [
@@ -91,6 +107,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           value: UserRole.driver,
                           label: Text(context.t('driver')),
                           icon: Icon(Icons.local_shipping_outlined),
+                        ),
+                        ButtonSegment(
+                          value: UserRole.store,
+                          label: Text(context.t('store')),
+                          icon: Icon(Icons.storefront_outlined),
                         ),
                       ],
                       selected: {_role},
@@ -114,8 +135,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         if (v == null || v.trim().isEmpty) {
                           return context.t('field_required');
                         }
-                        return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                .hasMatch(v.trim())
+                        return RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            ).hasMatch(v.trim())
                             ? null
                             : context.t('valid_email');
                       },
@@ -145,8 +167,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     if (_role == UserRole.driver) ...[
                       const SizedBox(height: 18),
-                      Text(context.t('vehicle'),
-                          style: AppTextStyles.captionMedium),
+                      Text(
+                        context.t('vehicle'),
+                        style: AppTextStyles.captionMedium,
+                      ),
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
@@ -158,8 +182,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.two_wheeler_rounded,
-                                color: AppColors.driverRole),
+                            const Icon(
+                              Icons.two_wheeler_rounded,
+                              color: AppColors.driverRole,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               context.t('motorcycle'),
@@ -180,8 +206,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.surfaceAlt(context),
                             borderRadius: BorderRadius.circular(14),
-                            border:
-                                Border.all(color: AppColors.border(context)),
+                            border: Border.all(
+                              color: AppColors.border(context),
+                            ),
                           ),
                           child: _vehiclePhoto == null
                               ? Column(
@@ -202,6 +229,80 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ],
+                    if (_role == UserRole.store) ...[
+                      const SizedBox(height: 18),
+                      Text(
+                        context.t('store_type'),
+                        style: AppTextStyles.captionMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<StoreType>(
+                        value: _storeType,
+                        decoration: InputDecoration(
+                          hintText: context.t('store_type'),
+                        ),
+                        items: StoreType.values
+                            .map(
+                              (type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(context.t(type.name)),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _storeType = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: _storeAddress,
+                        hint: context.t('store_address'),
+                        validator: (v) {
+                          final text = v?.trim() ?? '';
+                          if (text.isEmpty) return context.t('field_required');
+                          if (text.length < 6) {
+                            return context.t('address_too_short');
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: _pickStorePhoto,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          height: 140,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceAlt(context),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.border(context),
+                            ),
+                          ),
+                          child: _storePhoto == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.add_photo_alternate_outlined,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(context.t('upload_store_photo')),
+                                  ],
+                                )
+                              : ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.file(
+                                    _storePhoto!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 22),
                     PrimaryButton(
                       label: context.t('create_account'),
@@ -211,25 +312,45 @@ class _SignupScreenState extends State<SignupScreen> {
                         if (_role == UserRole.driver && _vehiclePhoto == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content:
-                                  Text(context.t('vehicle_photo_required')),
+                              content: Text(
+                                context.t('vehicle_photo_required'),
+                              ),
                             ),
                           );
                           return;
                         }
-                        context.read<AuthBloc>().add(AuthSignUpRequested(
-                              email: _email.text,
-                              password: _password.text,
-                              fullName: _name.text,
-                              phoneNumber: _phone.text,
-                              role: _role,
-                              vehicleType: _role == UserRole.driver
-                                  ? _vehicleType
-                                  : null,
-                              vehiclePhoto: _role == UserRole.driver
-                                  ? _vehiclePhoto
-                                  : null,
-                            ));
+                        if (_role == UserRole.store && _storePhoto == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(context.t('store_photo_required')),
+                            ),
+                          );
+                          return;
+                        }
+                        context.read<AuthBloc>().add(
+                          AuthSignUpRequested(
+                            email: _email.text,
+                            password: _password.text,
+                            fullName: _name.text,
+                            phoneNumber: _phone.text,
+                            role: _role,
+                            vehicleType: _role == UserRole.driver
+                                ? _vehicleType
+                                : null,
+                            vehiclePhoto: _role == UserRole.driver
+                                ? _vehiclePhoto
+                                : null,
+                            storeType: _role == UserRole.store
+                                ? _storeType
+                                : null,
+                            storeAddress: _role == UserRole.store
+                                ? _storeAddress.text
+                                : null,
+                            profilePhoto: _role == UserRole.store
+                                ? _storePhoto
+                                : null,
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 12),

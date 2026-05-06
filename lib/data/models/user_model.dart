@@ -16,6 +16,8 @@ class UserModel extends UserEntity {
     super.profilePhotoBase64,
     super.vehiclePhotoBase64,
     super.vehiclePhotoContentType,
+    super.storeType,
+    super.storeAddress,
     super.rating,
     super.totalDeliveries,
     super.currentLocation,
@@ -37,6 +39,8 @@ class UserModel extends UserEntity {
       vehiclePhotoBase64: data['vehiclePhotoBase64'] as String?,
       vehiclePhotoContentType:
           data['vehiclePhotoContentType'] as String? ?? 'image/jpeg',
+      storeType: StoreTypeX.fromString(data['storeType'] as String?),
+      storeAddress: data['storeAddress'] as String?,
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       totalDeliveries: (data['totalDeliveries'] as num?)?.toInt() ?? 0,
       currentLocation: geo == null
@@ -57,6 +61,8 @@ class UserModel extends UserEntity {
       'profilePhotoBase64': profilePhotoBase64,
       'vehiclePhotoBase64': vehiclePhotoBase64,
       'vehiclePhotoContentType': vehiclePhotoContentType,
+      'storeType': storeType?.name,
+      'storeAddress': storeAddress,
       'rating': rating,
       'totalDeliveries': totalDeliveries,
       'updatedAt': FieldValue.serverTimestamp(),
