@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "391374475758",
+    "firebase_url": "https://veloce-express-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "veloce-express",
+    "storage_bucket": "veloce-express.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:391374475758:android:de697a7b790fe1f7c0feff",
+        "android_client_info": {
+          "package_name": "com.example.veloce_express"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "391374475758-0jeq2o2uuh9arcem5bbuur2kcs772h3v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvxTNotYH6Eibgj7bQgVF6kQCccjOUpHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "391374475758-0jeq2o2uuh9arcem5bbuur2kcs772h3v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,113 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function myUser() {
+      return userDoc(request.auth.uid);
+    }
+
+    function isVerified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isApproved() {
+      return isVerified() && myUser().data.isApproved == true;
+    }
+
+    function isAdmin() {
+      return isApproved() && myUser().data.role == 'admin';
+    }
+
+    function isDriver() {
+      return isApproved() && myUser().data.role == 'driver';
+    }
+
+    function isClient() {
+      return isApproved() && myUser().data.role == 'client';
+    }
+
+    match /users/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role in ['client', 'driver']
+        && request.resource.data.isApproved == false;
+
+      allow read: if signedIn()
+        && (request.auth.uid == uid || isAdmin() || isApproved());
+
+      allow update: if signedIn() && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasAny(['isApproved', 'role']);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if isClient()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'open';
+
+      allow read: if isAdmin()
+        || (isClient() && resource.data.clientId == request.auth.uid)
+        || isDriver();
+
+      allow update: if isClient()
+        && resource.data.clientId == request.auth.uid
+        && request.resource.data.clientId == resource.data.clientId;
+
+      allow update: if isDriver()
+        && resource.data.driverId == request.auth.uid
+        && request.resource.data.driverId == resource.data.driverId;
+
+      allow update, delete: if isAdmin();
+
+      match /bids/{bidId} {
+        allow create: if isDriver()
+          && bidId == request.auth.uid
+          && request.resource.data.driverId == request.auth.uid
+          && request.resource.data.status == 'pending';
+
+        allow read: if isAdmin()
+          || isDriver()
+          || (isClient()
+            && get(/databases/$(database)/documents/orders/$(orderId)).data.clientId == request.auth.uid);
+
+        allow update: if isClient()
+          && get(/databases/$(database)/documents/orders/$(orderId)).data.clientId == request.auth.uid;
+
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /notifications/{notificationId} {
+      allow create: if isApproved();
+      allow read: if isApproved()
+        && resource.data.userId == request.auth.uid;
+      allow update: if isApproved()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasOnly(['read', 'readAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /admin_logs/{logId} {
+      allow create, read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

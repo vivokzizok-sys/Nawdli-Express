@@ -1,0 +1,252 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../data/models/bid_model.dart';
+import '../../../data/models/order_model.dart';
+import '../../../domain/entities/bid_entity.dart';
+import '../../../domain/entities/order_entity.dart';
+import '../../order/bloc/order_bloc.dart';
+import '../../shared/widgets/shared_widgets.dart';
+
+class OrderDetailScreen extends StatelessWidget {
+  final String orderId;
+
+  const OrderDetailScreen({super.key, required this.orderId});
+
+  @override
+  Widget build(BuildContext context) {
+    final orderStream = FirebaseFirestore.instance
+        .collection('orders')
+        .doc(orderId)
+        .snapshots();
+
+    return BlocListener<OrderBloc, OrderState>(
+      listener: (context, state) {
+        if (state is OrderError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: orderStream,
+        builder: (context, snap) {
+          if (!snap.hasData) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            );
+          }
+          if (!snap.data!.exists) {
+            return const Scaffold(
+              body: EmptyState(
+                icon: Icons.search_off_rounded,
+                title: 'Order not found',
+                subtitle: 'This request no longer exists.',
+              ),
+            );
+          }
+          final order = OrderModel.fromFirestore(snap.data!);
+          return Scaffold(
+            appBar: AppBar(title: const Text('Order')),
+            body: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _OrderSummary(order: order),
+                const SizedBox(height: 18),
+                Text('Bids', style: AppTextStyles.title3),
+                const SizedBox(height: 10),
+                _BidsList(order: order),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _OrderSummary extends StatelessWidget {
+  final OrderEntity order;
+
+  const _OrderSummary({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.grey100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Hero(
+                tag: 'order-icon-${order.orderId}',
+                child: const Icon(Icons.inventory_2_outlined),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(order.description, style: AppTextStyles.title3)),
+              StatusChip(label: order.status.value, color: AppColors.accent),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text('From', style: AppTextStyles.caption),
+          Text(order.pickupAddress, style: AppTextStyles.bodyMedium),
+          const SizedBox(height: 10),
+          Text('To', style: AppTextStyles.caption),
+          Text(order.dropoffAddress, style: AppTextStyles.bodyMedium),
+          if (order.acceptedBidAmount != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Accepted fare: \$${order.acceptedBidAmount!.toStringAsFixed(2)}',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.success),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BidsList extends StatelessWidget {
+  final OrderEntity order;
+
+  const _BidsList({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .doc(order.orderId)
+          .collection('bids')
+          .orderBy('amount')
+          .snapshots(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+        final bids = snap.data!.docs
+            .map((doc) => BidModel.fromFirestore(orderId: order.orderId, doc: doc))
+            .toList();
+        if (bids.isEmpty) {
+          return const EmptyState(
+            icon: Icons.local_offer_outlined,
+            title: 'No bids yet',
+            subtitle: 'Approved drivers will bid in real time.',
+          );
+        }
+        return Column(
+          children: bids.map((bid) => _BidTile(order: order, bid: bid)).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _BidTile extends StatelessWidget {
+  final OrderEntity order;
+  final BidEntity bid;
+
+  const _BidTile({required this.order, required this.bid});
+
+  @override
+  Widget build(BuildContext context) {
+    final canAct = bid.status == BidStatus.pending &&
+        (order.status == OrderStatus.open || order.status == OrderStatus.bidding);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.grey100),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.person_pin_circle_outlined),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(bid.driverName, style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Rating ${bid.driverRating.toStringAsFixed(1)}',
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '\$${bid.amount.toStringAsFixed(2)}',
+                style: AppTextStyles.title3.copyWith(color: AppColors.accent),
+              ),
+            ],
+          ),
+          if (canAct) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => context.read<OrderBloc>().add(
+                          OrderBidRejected(
+                            orderId: order.orderId,
+                            bidId: bid.bidId,
+                          ),
+                        ),
+                    child: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () async {
+                      context.read<OrderBloc>().add(
+                            OrderBidAccepted(orderId: order.orderId, bid: bid),
+                          );
+                      final driver =
+                          await context.read<OrderBloc>().getUser(bid.driverId);
+                      if (driver != null && context.mounted) {
+                        context.go('/active-trip', extra: {
+                          'order': order.copyWith(
+                            status: OrderStatus.accepted,
+                            driverId: bid.driverId,
+                            acceptedBidId: bid.bidId,
+                            acceptedBidAmount: bid.amount,
+                          ),
+                          'otherParty': driver,
+                        });
+                      }
+                    },
+                    child: const Text('Accept'),
+                  ),
+                ),
+              ],
+            ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: StatusChip(
+                label: bid.status.value,
+                color: bid.status == BidStatus.accepted
+                    ? AppColors.success
+                    : AppColors.grey400,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
