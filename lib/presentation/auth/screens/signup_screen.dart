@@ -62,6 +62,7 @@ class _SignupScreenState extends State<SignupScreen> {
       builder: (context, state) {
         final loading = state is AuthLoading;
         return Scaffold(
+          backgroundColor: AppColors.page(context),
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
@@ -158,9 +159,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           height: 140,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: AppColors.grey50,
+                            color: AppColors.surfaceAlt(context),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.grey200),
+                            border:
+                                Border.all(color: AppColors.border(context)),
                           ),
                           child: _vehiclePhoto == null
                               ? Column(

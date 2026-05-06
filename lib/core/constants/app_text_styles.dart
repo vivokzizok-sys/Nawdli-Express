@@ -113,6 +113,7 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
+      cardColor: AppColors.white,
     );
   }
 
@@ -138,6 +139,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF1B2026),
+        hintStyle: AppTextStyles.body.copyWith(color: const Color(0xFFAAB2C0)),
+        prefixIconColor: const Color(0xFFAAB2C0),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -149,6 +152,7 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
+      cardColor: const Color(0xFF171C22),
     );
   }
 }

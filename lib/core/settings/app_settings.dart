@@ -179,6 +179,15 @@ class AppStrings {
         'Your account and vehicle photo are under admin review.',
     'client_approval_body': 'Your account is under admin review.',
     'refresh_status': 'Refresh Status',
+    'driver_dashboard': 'Driver dashboard',
+    'client_dashboard': 'Client dashboard',
+    'total_orders': 'Total orders',
+    'active_orders': 'Active',
+    'completed_orders': 'Completed',
+    'total_spent': 'Total spent',
+    'total_earned': 'Total earned',
+    'available_jobs': 'Available jobs',
+    'statistics': 'Statistics',
   };
 
   static const _ar = <String, String>{
@@ -294,6 +303,15 @@ class AppStrings {
     'driver_approval_body': 'حسابك وصورة المركبة قيد مراجعة الأدمن.',
     'client_approval_body': 'حسابك قيد مراجعة الأدمن.',
     'refresh_status': 'تحديث الحالة',
+    'driver_dashboard': 'لوحة السائق',
+    'client_dashboard': 'لوحة الزبون',
+    'total_orders': 'كل الطلبات',
+    'active_orders': 'نشطة',
+    'completed_orders': 'مكتملة',
+    'total_spent': 'إجمالي المصروف',
+    'total_earned': 'إجمالي الربح',
+    'available_jobs': 'الطلبات المتاحة',
+    'statistics': 'الإحصائيات',
   };
 
   static String translate(AppLanguage language, String key) {

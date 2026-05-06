@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (context, state) {
         final loading = state is AuthLoading;
         return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(

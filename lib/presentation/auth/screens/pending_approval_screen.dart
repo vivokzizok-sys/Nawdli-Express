@@ -16,6 +16,7 @@ class PendingApprovalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.page(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -34,7 +35,9 @@ class PendingApprovalScreen extends StatelessWidget {
                 user.role == UserRole.driver
                     ? context.t('driver_approval_body')
                     : context.t('client_approval_body'),
-                style: AppTextStyles.body.copyWith(color: AppColors.grey500),
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textSecondary(context),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),

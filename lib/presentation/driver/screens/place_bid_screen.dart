@@ -49,6 +49,7 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
       builder: (context, state) {
         final loading = state is OrderProcessing;
         return Scaffold(
+          backgroundColor: AppColors.page(context),
           appBar: AppBar(
             leading: IconButton(
               tooltip: context.t('back'),
@@ -104,8 +105,10 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                       ? null
                                       : context.t('valid_amount');
                                 },
-                                prefixIcon:
-                                    const Icon(Icons.attach_money_rounded),
+                                prefixIcon: const Center(
+                                  widthFactor: 1.4,
+                                  child: Text('DA'),
+                                ),
                               ),
                               const SizedBox(height: 18),
                               PrimaryButton(

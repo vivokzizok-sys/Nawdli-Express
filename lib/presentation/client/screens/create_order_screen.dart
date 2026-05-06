@@ -71,6 +71,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       builder: (context, state) {
         final loading = state is OrderProcessing;
         return Scaffold(
+          backgroundColor: AppColors.page(context),
           appBar: AppBar(
             leading: IconButton(
               tooltip: context.t('back'),
@@ -130,9 +131,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               ),
               Container(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-                decoration: const BoxDecoration(
-                  color: AppColors.white,
-                  border: Border(top: BorderSide(color: AppColors.grey100)),
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  border: Border(
+                    top: BorderSide(color: AppColors.border(context)),
+                  ),
                 ),
                 child: SafeArea(
                   top: false,

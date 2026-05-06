@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/currency.dart';
 import '../../../data/models/bid_model.dart';
 import '../../../data/models/order_model.dart';
 import '../../../domain/entities/bid_entity.dart';
@@ -52,6 +53,7 @@ class OrderDetailScreen extends StatelessWidget {
           }
           final order = OrderModel.fromFirestore(snap.data!);
           return Scaffold(
+            backgroundColor: AppColors.page(context),
             appBar: AppBar(
               leading: IconButton(
                 tooltip: context.t('back'),
@@ -65,7 +67,10 @@ class OrderDetailScreen extends StatelessWidget {
               children: [
                 _OrderSummary(order: order),
                 const SizedBox(height: 18),
-                Text(context.t('bids'), style: AppTextStyles.title3),
+                Text(context.t('bids'),
+                    style: AppTextStyles.title3.copyWith(
+                      color: AppColors.textPrimary(context),
+                    )),
                 const SizedBox(height: 10),
                 _BidsList(order: order),
               ],
@@ -87,9 +92,9 @@ class _OrderSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey100),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,20 +107,32 @@ class _OrderSummary extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                  child: Text(order.description, style: AppTextStyles.title3)),
+                child: Text(
+                  order.description,
+                  style: AppTextStyles.title3.copyWith(
+                    color: AppColors.textPrimary(context),
+                  ),
+                ),
+              ),
               StatusChip(label: order.status.value, color: AppColors.accent),
             ],
           ),
           const SizedBox(height: 14),
           Text(context.t('from'), style: AppTextStyles.caption),
-          Text(order.pickupAddress, style: AppTextStyles.bodyMedium),
+          Text(order.pickupAddress,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textPrimary(context),
+              )),
           const SizedBox(height: 10),
           Text(context.t('to'), style: AppTextStyles.caption),
-          Text(order.dropoffAddress, style: AppTextStyles.bodyMedium),
+          Text(order.dropoffAddress,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textPrimary(context),
+              )),
           if (order.acceptedBidAmount != null) ...[
             const SizedBox(height: 14),
             Text(
-              'Accepted fare: \$${order.acceptedBidAmount!.toStringAsFixed(2)}',
+              'Accepted fare: ${CurrencyFormatter.da(order.acceptedBidAmount!)}',
               style:
                   AppTextStyles.bodyMedium.copyWith(color: AppColors.success),
             ),
@@ -179,9 +196,9 @@ class _BidTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey100),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         children: [
@@ -193,7 +210,10 @@ class _BidTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(bid.driverName, style: AppTextStyles.bodyMedium),
+                    Text(bid.driverName,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textPrimary(context),
+                        )),
                     Text(
                       '${context.t('rating')} ${bid.driverRating.toStringAsFixed(1)}',
                       style: AppTextStyles.caption,
@@ -202,7 +222,7 @@ class _BidTile extends StatelessWidget {
                 ),
               ),
               Text(
-                '\$${bid.amount.toStringAsFixed(2)}',
+                CurrencyFormatter.da(bid.amount),
                 style: AppTextStyles.title3.copyWith(color: AppColors.accent),
               ),
             ],

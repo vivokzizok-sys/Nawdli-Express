@@ -34,6 +34,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
     return Scaffold(
+      backgroundColor: AppColors.page(context),
       appBar: AppBar(
         title: Text(context.t('jobs_near_you')),
         actions: [
@@ -65,6 +66,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   }
                   return Column(
                     children: [
+                      _DriverStats(
+                        driverId: user.uid,
+                        availableJobs: state.orders.length,
+                      ),
                       _JobsMap(orders: state.orders),
                       Expanded(
                         child: ListView.separated(
@@ -83,6 +88,137 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriverStats extends StatelessWidget {
+  final String driverId;
+  final int availableJobs;
+
+  const _DriverStats({
+    required this.driverId,
+    required this.availableJobs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .where('driverId', isEqualTo: driverId)
+          .limit(100)
+          .snapshots(),
+      builder: (context, snap) {
+        final docs = snap.data?.docs ?? [];
+        final active = docs.where((doc) {
+          final status = doc.data()['status'] as String? ?? '';
+          return status == 'accepted' || status == 'inProgress';
+        }).length;
+        final completed =
+            docs.where((doc) => doc.data()['status'] == 'delivered').toList();
+        final earned = completed.fold<double>(
+          0,
+          (sum, doc) =>
+              sum +
+              ((doc.data()['acceptedBidAmount'] as num?)?.toDouble() ?? 0),
+        );
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(context.t('driver_dashboard'), style: AppTextStyles.title3),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _DriverStatCard(
+                      label: context.t('available_jobs'),
+                      value: '$availableJobs',
+                      icon: Icons.work_outline_rounded,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _DriverStatCard(
+                      label: context.t('active_orders'),
+                      value: '$active',
+                      icon: Icons.navigation_outlined,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _DriverStatCard(
+                      label: context.t('completed_orders'),
+                      value: '${completed.length}',
+                      icon: Icons.check_circle_outline_rounded,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _DriverStatCard(
+                      label: context.t('total_earned'),
+                      value: '${earned.toStringAsFixed(0)} DA',
+                      icon: Icons.payments_outlined,
+                      color: AppColors.driverRole,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DriverStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _DriverStatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 10),
+          Text(value, style: AppTextStyles.title3),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary(context),
             ),
           ),
         ],
@@ -126,7 +262,9 @@ class _DriverActiveTripBanner extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.accentLight,
+                color: AppColors.isDark(context)
+                    ? AppColors.accent.withOpacity(0.14)
+                    : AppColors.accentLight,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.accent.withOpacity(0.25)),
               ),
@@ -168,9 +306,9 @@ class _JobTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.grey100),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

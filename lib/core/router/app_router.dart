@@ -18,6 +18,7 @@ import '../../presentation/client/screens/create_order_screen.dart';
 import '../../presentation/client/screens/order_detail_screen.dart';
 import '../../presentation/driver/screens/driver_home_screen.dart';
 import '../../presentation/driver/screens/place_bid_screen.dart';
+import '../../presentation/settings/screens/settings_screen.dart';
 import '../../presentation/tracking/screens/active_trip_screen.dart';
 
 class AppRoutes {
@@ -36,6 +37,7 @@ class AppRoutes {
 
   static const activeTrip = '/active-trip';
   static const adminDashboard = '/admin/dashboard';
+  static const settings = '/settings';
 }
 
 class AppRouter {
@@ -166,6 +168,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.adminDashboard,
           pageBuilder: (_, state) => _fade(state, const AdminDashboardScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.settings,
+          pageBuilder: (_, state) => _slide(state, const SettingsScreen()),
         ),
       ],
       errorBuilder: (_, state) => Scaffold(

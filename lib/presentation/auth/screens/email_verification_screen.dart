@@ -16,6 +16,7 @@ class EmailVerificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.page(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -34,7 +35,9 @@ class EmailVerificationScreen extends StatelessWidget {
                 context
                     .t('verify_email_body')
                     .replaceAll('{email}', user.email),
-                style: AppTextStyles.body.copyWith(color: AppColors.grey500),
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textSecondary(context),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),

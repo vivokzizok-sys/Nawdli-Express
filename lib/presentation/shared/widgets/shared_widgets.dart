@@ -87,7 +87,7 @@ class AppTextField extends StatelessWidget {
       obscureText: obscureText,
       maxLines: maxLines,
       validator: validator,
-      style: AppTextStyles.body,
+      style: AppTextStyles.body.copyWith(color: AppColors.textPrimary(context)),
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: prefixIcon,
@@ -118,11 +118,16 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 42, color: AppColors.grey400),
             const SizedBox(height: 12),
-            Text(title, style: AppTextStyles.title3),
+            Text(title,
+                style: AppTextStyles.title3.copyWith(
+                  color: AppColors.textPrimary(context),
+                )),
             const SizedBox(height: 6),
             Text(
               subtitle,
-              style: AppTextStyles.body.copyWith(color: AppColors.grey500),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textSecondary(context),
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -143,7 +148,7 @@ class StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(AppColors.isDark(context) ? 0.18 : 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

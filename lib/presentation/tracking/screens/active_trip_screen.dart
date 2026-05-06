@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/currency.dart';
 import '../../../domain/entities/order_entity.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -150,6 +151,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen>
         return WillPopScope(
           onWillPop: () => _confirmExit(context),
           child: Scaffold(
+            backgroundColor: AppColors.page(context),
             body: Stack(
               children: [
                 FlutterMap(
@@ -313,7 +315,7 @@ class _TopStatusBar extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: AppColors.surface(context),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -352,7 +354,7 @@ class _TopStatusBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.surface(context),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -397,9 +399,9 @@ class _BottomPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
@@ -411,7 +413,7 @@ class _BottomPanel extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey200,
+                color: AppColors.border(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -475,7 +477,7 @@ class _BottomPanel extends StatelessWidget {
                 children: [
                   Text(context.t('agreed_fare'), style: AppTextStyles.body),
                   Text(
-                    '\$${order.acceptedBidAmount!.toStringAsFixed(2)}',
+                    CurrencyFormatter.da(order.acceptedBidAmount!),
                     style:
                         AppTextStyles.title3.copyWith(color: AppColors.accent),
                   ),
@@ -548,7 +550,7 @@ class _ConfirmTripSheet extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -561,7 +563,9 @@ class _ConfirmTripSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             context.t('confirm_trip_body'),
-            style: AppTextStyles.body.copyWith(color: AppColors.grey500),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -574,8 +578,8 @@ class _ConfirmTripSheet extends StatelessWidget {
           PrimaryButton(
             label: context.t('cancel'),
             onPressed: () => Navigator.pop(context),
-            backgroundColor: AppColors.grey50,
-            foregroundColor: AppColors.grey700,
+            backgroundColor: AppColors.surfaceAlt(context),
+            foregroundColor: AppColors.textPrimary(context),
           ),
         ],
       ),
@@ -621,7 +625,7 @@ class _RatingSheetState extends State<_RatingSheet>
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -640,7 +644,9 @@ class _RatingSheetState extends State<_RatingSheet>
           const SizedBox(height: 6),
           Text(
             '${context.t('how_was')} ${widget.driverName}?',
-            style: AppTextStyles.body.copyWith(color: AppColors.grey500),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
           ),
           const SizedBox(height: 22),
           ScaleTransition(

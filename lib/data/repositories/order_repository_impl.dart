@@ -111,7 +111,7 @@ class OrderRepositoryImpl implements OrderRepository {
         orderId: orderId,
         type: 'bid_received',
         title: 'New bid received',
-        body: '${driver.fullName} bid \$${amount.toStringAsFixed(2)}',
+        body: '${driver.fullName} bid ${amount.toStringAsFixed(0)} DA',
         createdBy: driver.uid,
       );
       return const Right(null);

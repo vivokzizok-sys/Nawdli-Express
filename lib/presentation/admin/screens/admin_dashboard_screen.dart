@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/currency.dart';
 import '../../../presentation/auth/bloc/auth_bloc.dart';
 import '../../../presentation/shared/widgets/app_menu_button.dart';
 
@@ -38,7 +39,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.page(context),
       appBar: AppBar(
         title: Row(children: [
           Container(
@@ -177,9 +178,9 @@ class _PendingUserCardState extends State<_PendingUserCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey100),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +245,7 @@ class _PendingUserCardState extends State<_PendingUserCard> {
                       errorBuilder: (_, __, ___) => Container(
                         height: 180,
                         width: double.infinity,
-                        color: AppColors.grey50,
+                        color: AppColors.surfaceAlt(context),
                         child: const Icon(
                           Icons.broken_image_outlined,
                           color: AppColors.grey300,
@@ -260,8 +261,9 @@ class _PendingUserCardState extends State<_PendingUserCard> {
 
           // Actions
           Container(
-            decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.grey100))),
+            decoration: BoxDecoration(
+                border:
+                    Border(top: BorderSide(color: AppColors.border(context)))),
             child: _loading
                 ? const Padding(
                     padding: EdgeInsets.all(20),
@@ -280,7 +282,8 @@ class _PendingUserCardState extends State<_PendingUserCard> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     )),
-                    Container(width: 1, height: 44, color: AppColors.grey100),
+                    Container(
+                        width: 1, height: 44, color: AppColors.border(context)),
                     // Approve
                     Expanded(
                         child: TextButton.icon(
@@ -380,14 +383,18 @@ class _OrdersTabState extends State<_OrdersTab> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.accent : AppColors.white,
+                    color: selected
+                        ? AppColors.accent
+                        : AppColors.surface(context),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                         color: selected ? AppColors.accent : AppColors.grey200),
                   ),
                   child: Text(e.value,
                       style: AppTextStyles.captionMedium.copyWith(
-                        color: selected ? AppColors.white : AppColors.grey500,
+                        color: selected
+                            ? AppColors.white
+                            : AppColors.textSecondary(context),
                       )),
                 ),
               );
@@ -447,9 +454,9 @@ class _AdminOrderRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey100),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(children: [
         Container(
@@ -487,7 +494,7 @@ class _AdminOrderRow extends StatelessWidget {
           ),
           if (amount != null) ...[
             const SizedBox(height: 3),
-            Text('\$${amount.toStringAsFixed(2)}',
+            Text(CurrencyFormatter.da(amount),
                 style: AppTextStyles.captionMedium
                     .copyWith(color: AppColors.success)),
           ],
@@ -551,7 +558,7 @@ class _UsersTabState extends State<_UsersTab> {
                     decoration: BoxDecoration(
                       color: _roleFilter == entry.key
                           ? AppColors.accent
-                          : AppColors.white,
+                          : AppColors.surface(context),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                           color: _roleFilter == entry.key
@@ -562,7 +569,7 @@ class _UsersTabState extends State<_UsersTab> {
                         style: AppTextStyles.captionMedium.copyWith(
                             color: _roleFilter == entry.key
                                 ? AppColors.white
-                                : AppColors.grey500),
+                                : AppColors.textSecondary(context)),
                         textAlign: TextAlign.center),
                   ),
                 ),
@@ -636,9 +643,9 @@ class _UserRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey100),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(children: [
         // Avatar
@@ -746,7 +753,8 @@ class _EmptyAdminState extends StatelessWidget {
           Text(title, style: AppTextStyles.title3),
           const SizedBox(height: 6),
           Text(subtitle,
-              style: AppTextStyles.body.copyWith(color: AppColors.grey500)),
+              style: AppTextStyles.body
+                  .copyWith(color: AppColors.textSecondary(context))),
         ],
       ),
     );
