@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../shared/widgets/shared_widgets.dart';
 import '../bloc/auth_bloc.dart';
@@ -27,18 +28,18 @@ class PendingApprovalScreen extends StatelessWidget {
                 color: AppColors.black,
               ),
               const SizedBox(height: 18),
-              const Text('Waiting for approval', style: AppTextStyles.title1),
+              Text(context.t('waiting_approval'), style: AppTextStyles.title1),
               const SizedBox(height: 8),
               Text(
                 user.role == UserRole.driver
-                    ? 'Your account and vehicle photo are under admin review.'
-                    : 'Your account is under admin review.',
+                    ? context.t('driver_approval_body')
+                    : context.t('client_approval_body'),
                 style: AppTextStyles.body.copyWith(color: AppColors.grey500),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),
               PrimaryButton(
-                label: 'Refresh Status',
+                label: context.t('refresh_status'),
                 onPressed: () =>
                     context.read<AuthBloc>().add(AuthRefreshRequested()),
               ),
@@ -46,7 +47,7 @@ class PendingApprovalScreen extends StatelessWidget {
               TextButton(
                 onPressed: () =>
                     context.read<AuthBloc>().add(AuthSignOutRequested()),
-                child: const Text('Sign out'),
+                child: Text(context.t('sign_out')),
               ),
             ],
           ),

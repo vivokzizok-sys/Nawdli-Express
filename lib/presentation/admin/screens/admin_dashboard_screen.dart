@@ -65,8 +65,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           labelStyle:
               AppTextStyles.captionMedium.copyWith(fontWeight: FontWeight.w700),
           tabs: [
-            const Tab(text: 'Approvals'),
-            const Tab(text: 'Orders'),
+            Tab(text: context.t('approvals')),
+            Tab(text: context.t('orders')),
             Tab(text: context.t('users')),
           ],
         ),
@@ -108,8 +108,8 @@ class _ApprovalsTab extends StatelessWidget {
           return _EmptyAdminState(
             icon: Icons.check_circle_outline_rounded,
             color: AppColors.success,
-            title: 'All caught up!',
-            subtitle: 'No pending approvals.',
+            title: context.t('all_caught_up'),
+            subtitle: context.t('no_pending_approvals'),
           );
         }
 
@@ -229,7 +229,7 @@ class _PendingUserCardState extends State<_PendingUserCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Vehicle Photo',
+                  Text(context.t('vehicle_photo'),
                       style: AppTextStyles.captionMedium.copyWith(
                           color: AppColors.grey700,
                           fontWeight: FontWeight.w600)),
@@ -274,7 +274,7 @@ class _PendingUserCardState extends State<_PendingUserCard> {
                         child: TextButton.icon(
                       onPressed: () => _setApproval(false),
                       icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Reject'),
+                      label: Text(context.t('reject')),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.error,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -286,7 +286,7 @@ class _PendingUserCardState extends State<_PendingUserCard> {
                         child: TextButton.icon(
                       onPressed: () => _setApproval(true),
                       icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Approve'),
+                      label: Text(context.t('approve')),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.success,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -407,8 +407,8 @@ class _OrdersTabState extends State<_OrdersTab> {
                 return _EmptyAdminState(
                   icon: Icons.receipt_long_outlined,
                   color: AppColors.grey400,
-                  title: 'No orders',
-                  subtitle: 'No orders match this filter.',
+                  title: context.t('no_orders'),
+                  subtitle: context.t('no_orders_filter'),
                 );
               }
 
@@ -697,7 +697,7 @@ class _UserRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isApproved ? 'Approved' : 'Blocked',
+                  isApproved ? context.t('approved') : context.t('blocked'),
                   style: AppTextStyles.caption.copyWith(
                     color: isApproved ? AppColors.success : AppColors.error,
                     fontWeight: FontWeight.w700,

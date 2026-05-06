@@ -57,11 +57,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               builder: (context, state) {
                 if (state is OrdersLoaded) {
                   if (state.orders.isEmpty) {
-                    return const EmptyState(
+                    return EmptyState(
                       icon: Icons.work_outline_rounded,
-                      title: 'No jobs available',
-                      subtitle:
-                          'Open Veloce Express requests will appear here.',
+                      title: context.t('no_jobs_available'),
+                      subtitle: context.t('open_requests_appear'),
                     );
                   }
                   return Column(
@@ -137,7 +136,7 @@ class _DriverActiveTripBanner extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Active trip: ${order.pickupAddress} -> ${order.dropoffAddress}',
+                      '${context.t('active_trip')}: ${order.pickupAddress} -> ${order.dropoffAddress}',
                       style: AppTextStyles.captionMedium.copyWith(
                         color: AppColors.accent,
                       ),
@@ -185,10 +184,10 @@ class _JobTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Text('Pickup', style: AppTextStyles.caption),
+            Text(context.t('pickup'), style: AppTextStyles.caption),
             Text(order.pickupAddress, style: AppTextStyles.bodyMedium),
             const SizedBox(height: 8),
-            Text('Drop-off', style: AppTextStyles.caption),
+            Text(context.t('dropoff'), style: AppTextStyles.caption),
             Text(order.dropoffAddress, style: AppTextStyles.bodyMedium),
           ],
         ),

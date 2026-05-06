@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../shared/widgets/shared_widgets.dart';
@@ -75,18 +76,19 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Create account', style: AppTextStyles.title1),
+                    Text(context.t('create_account'),
+                        style: AppTextStyles.title1),
                     const SizedBox(height: 20),
                     SegmentedButton<UserRole>(
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: UserRole.client,
-                          label: Text('Client'),
+                          label: Text(context.t('client')),
                           icon: Icon(Icons.person_outline_rounded),
                         ),
                         ButtonSegment(
                           value: UserRole.driver,
-                          label: Text('Driver'),
+                          label: Text(context.t('driver')),
                           icon: Icon(Icons.local_shipping_outlined),
                         ),
                       ],
@@ -97,48 +99,50 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 16),
                     AppTextField(
                       controller: _name,
-                      hint: 'Full name',
-                      validator: (v) => Validators.required(v, label: 'Name'),
+                      hint: context.t('full_name'),
+                      validator: (v) =>
+                          Validators.required(v, label: context.t('full_name')),
                     ),
                     const SizedBox(height: 12),
                     AppTextField(
                       controller: _email,
-                      hint: 'Email',
+                      hint: context.t('email'),
                       keyboardType: TextInputType.emailAddress,
                       validator: Validators.email,
                     ),
                     const SizedBox(height: 12),
                     AppTextField(
                       controller: _phone,
-                      hint: 'Phone number',
+                      hint: context.t('phone'),
                       keyboardType: TextInputType.phone,
                       validator: Validators.phone,
                     ),
                     const SizedBox(height: 12),
                     AppTextField(
                       controller: _password,
-                      hint: 'Password',
+                      hint: context.t('password'),
                       obscureText: true,
                       validator: Validators.password,
                     ),
                     if (_role == UserRole.driver) ...[
                       const SizedBox(height: 18),
-                      Text('Vehicle', style: AppTextStyles.captionMedium),
+                      Text(context.t('vehicle'),
+                          style: AppTextStyles.captionMedium),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<VehicleType>(
                         value: _vehicleType,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: VehicleType.bike,
-                            child: Text('Bike'),
+                            child: Text(context.t('bike')),
                           ),
                           DropdownMenuItem(
                             value: VehicleType.car,
-                            child: Text('Car'),
+                            child: Text(context.t('car')),
                           ),
                           DropdownMenuItem(
                             value: VehicleType.truck,
-                            child: Text('Truck'),
+                            child: Text(context.t('truck')),
                           ),
                         ],
                         onChanged: (value) {
@@ -159,12 +163,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             border: Border.all(color: AppColors.grey200),
                           ),
                           child: _vehiclePhoto == null
-                              ? const Column(
+                              ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.photo_camera_outlined),
-                                    SizedBox(height: 8),
-                                    Text('Upload vehicle photo'),
+                                    const Icon(Icons.photo_camera_outlined),
+                                    const SizedBox(height: 8),
+                                    Text(context.t('upload_vehicle_photo')),
                                   ],
                                 )
                               : ClipRRect(
@@ -179,7 +183,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                     const SizedBox(height: 22),
                     PrimaryButton(
-                      label: 'Create Account',
+                      label: context.t('create_account'),
                       isLoading: loading,
                       onPressed: () {
                         if (!_formKey.currentState!.validate()) return;
@@ -202,7 +206,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     Center(
                       child: TextButton(
                         onPressed: () => context.go('/login'),
-                        child: const Text('I already have an account'),
+                        child: Text(context.t('already_have_account')),
                       ),
                     ),
                   ],

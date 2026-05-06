@@ -42,11 +42,11 @@ class OrderDetailScreen extends StatelessWidget {
             );
           }
           if (!snap.data!.exists) {
-            return const Scaffold(
+            return Scaffold(
               body: EmptyState(
                 icon: Icons.search_off_rounded,
-                title: 'Order not found',
-                subtitle: 'This request no longer exists.',
+                title: context.t('order_not_found'),
+                subtitle: context.t('order_missing'),
               ),
             );
           }
@@ -65,7 +65,7 @@ class OrderDetailScreen extends StatelessWidget {
               children: [
                 _OrderSummary(order: order),
                 const SizedBox(height: 18),
-                Text('Bids', style: AppTextStyles.title3),
+                Text(context.t('bids'), style: AppTextStyles.title3),
                 const SizedBox(height: 10),
                 _BidsList(order: order),
               ],
@@ -107,10 +107,10 @@ class _OrderSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Text('From', style: AppTextStyles.caption),
+          Text(context.t('from'), style: AppTextStyles.caption),
           Text(order.pickupAddress, style: AppTextStyles.bodyMedium),
           const SizedBox(height: 10),
-          Text('To', style: AppTextStyles.caption),
+          Text(context.t('to'), style: AppTextStyles.caption),
           Text(order.dropoffAddress, style: AppTextStyles.bodyMedium),
           if (order.acceptedBidAmount != null) ...[
             const SizedBox(height: 14),
@@ -149,10 +149,10 @@ class _BidsList extends StatelessWidget {
                 BidModel.fromFirestore(orderId: order.orderId, doc: doc))
             .toList();
         if (bids.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.local_offer_outlined,
-            title: 'No bids yet',
-            subtitle: 'Approved drivers will bid in real time.',
+            title: context.t('no_bids_yet'),
+            subtitle: context.t('drivers_bid_realtime'),
           );
         }
         return Column(
@@ -195,7 +195,7 @@ class _BidTile extends StatelessWidget {
                   children: [
                     Text(bid.driverName, style: AppTextStyles.bodyMedium),
                     Text(
-                      'Rating ${bid.driverRating.toStringAsFixed(1)}',
+                      '${context.t('rating')} ${bid.driverRating.toStringAsFixed(1)}',
                       style: AppTextStyles.caption,
                     ),
                   ],
@@ -219,7 +219,7 @@ class _BidTile extends StatelessWidget {
                             bidId: bid.bidId,
                           ),
                         ),
-                    child: const Text('Reject'),
+                    child: Text(context.t('reject')),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -243,7 +243,7 @@ class _BidTile extends StatelessWidget {
                         });
                       }
                     },
-                    child: const Text('Accept'),
+                    child: Text(context.t('accept')),
                   ),
                 ),
               ],

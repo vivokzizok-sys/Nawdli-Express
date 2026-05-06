@@ -90,26 +90,26 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                               ],
                               AppTextField(
                                 controller: _amount,
-                                hint: 'Bid amount',
+                                hint: context.t('bid_amount'),
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
                                 validator: (value) {
                                   final base = Validators.required(value,
-                                      label: 'Amount');
+                                      label: context.t('amount'));
                                   if (base != null) return base;
                                   final amount = double.tryParse(value!);
                                   return amount != null && amount > 0
                                       ? null
-                                      : 'Enter a valid amount';
+                                      : context.t('valid_amount');
                                 },
                                 prefixIcon:
                                     const Icon(Icons.attach_money_rounded),
                               ),
                               const SizedBox(height: 18),
                               PrimaryButton(
-                                label: 'Send Bid',
+                                label: context.t('send_bid'),
                                 isLoading: loading,
                                 onPressed: () {
                                   if (!_formKey.currentState!.validate())

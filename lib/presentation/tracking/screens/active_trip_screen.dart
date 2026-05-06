@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/order_entity.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -67,7 +68,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen>
             point: _driverPoint!,
             color: AppColors.accent,
             icon: Icons.local_shipping_outlined,
-            label: _isDriver ? 'You' : widget.otherParty.fullName,
+            label: _isDriver ? context.t('you') : widget.otherParty.fullName,
           ),
       ];
 
@@ -130,7 +131,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen>
         if (state is TrackingDelivered) {
           if (_isDriver) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Trip completed.')),
+              SnackBar(content: Text(context.t('trip_completed'))),
             );
             context.go('/driver/home');
           } else {
@@ -265,18 +266,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen>
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Leave active trip?'),
-        content: const Text(
-          'The trip is still in progress. You can return to it anytime.',
-        ),
+        title: Text(context.t('leave_active_trip')),
+        content: Text(context.t('leave_active_trip_body')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Stay'),
+            child: Text(context.t('stay')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Leave'),
+            child: Text(context.t('leave')),
           ),
         ],
       ),
@@ -339,7 +338,7 @@ class _TopStatusBar extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'LIVE',
+                      context.t('live'),
                       style: AppTextStyles.label.copyWith(
                         color: AppColors.success,
                         fontSize: 11,
@@ -364,8 +363,8 @@ class _TopStatusBar extends StatelessWidget {
               ),
               child: Text(
                 order.status == OrderStatus.inProgress
-                    ? 'In transit'
-                    : 'Driver en route',
+                    ? context.t('in_transit')
+                    : context.t('driver_en_route'),
                 style: AppTextStyles.captionMedium.copyWith(
                   color: AppColors.accent,
                 ),
@@ -436,7 +435,9 @@ class _BottomPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isDriver ? 'Client' : 'Your Driver',
+                        isDriver
+                            ? context.t('client')
+                            : context.t('your_driver'),
                         style: AppTextStyles.caption,
                       ),
                       Text(otherParty.fullName,
@@ -457,14 +458,14 @@ class _BottomPanel extends StatelessWidget {
             _RouteRow(
               icon: Icons.trip_origin_rounded,
               color: AppColors.success,
-              label: 'From',
+              label: context.t('from'),
               address: order.pickupAddress,
             ),
             const SizedBox(height: 8),
             _RouteRow(
               icon: Icons.location_on_rounded,
               color: AppColors.error,
-              label: 'To',
+              label: context.t('to'),
               address: order.dropoffAddress,
             ),
             if (order.acceptedBidAmount != null) ...[
@@ -472,7 +473,7 @@ class _BottomPanel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Agreed Fare', style: AppTextStyles.body),
+                  Text(context.t('agreed_fare'), style: AppTextStyles.body),
                   Text(
                     '\$${order.acceptedBidAmount!.toStringAsFixed(2)}',
                     style:
@@ -484,7 +485,7 @@ class _BottomPanel extends StatelessWidget {
             if (isDriver && onComplete != null) ...[
               const SizedBox(height: 18),
               PrimaryButton(
-                label: 'Confirm Trip',
+                label: context.t('confirm_trip'),
                 onPressed: isLoading ? null : onComplete,
                 isLoading: isLoading,
                 backgroundColor: AppColors.success,
@@ -556,22 +557,22 @@ class _ConfirmTripSheet extends StatelessWidget {
           const Icon(Icons.inventory_2_outlined,
               color: AppColors.success, size: 42),
           const SizedBox(height: 16),
-          Text('Confirm Trip?', style: AppTextStyles.title2),
+          Text(context.t('confirm_trip_question'), style: AppTextStyles.title2),
           const SizedBox(height: 8),
           Text(
-            'Confirm only after handing the item to the client.',
+            context.t('confirm_trip_body'),
             style: AppTextStyles.body.copyWith(color: AppColors.grey500),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           PrimaryButton(
-            label: 'Yes, Completed',
+            label: context.t('yes_completed'),
             onPressed: onConfirm,
             backgroundColor: AppColors.success,
           ),
           const SizedBox(height: 12),
           PrimaryButton(
-            label: 'Cancel',
+            label: context.t('cancel'),
             onPressed: () => Navigator.pop(context),
             backgroundColor: AppColors.grey50,
             foregroundColor: AppColors.grey700,
@@ -635,10 +636,10 @@ class _RatingSheetState extends State<_RatingSheet>
             ),
           ),
           const SizedBox(height: 16),
-          Text('Rate your experience', style: AppTextStyles.title2),
+          Text(context.t('rate_experience'), style: AppTextStyles.title2),
           const SizedBox(height: 6),
           Text(
-            'How was ${widget.driverName}?',
+            '${context.t('how_was')} ${widget.driverName}?',
             style: AppTextStyles.body.copyWith(color: AppColors.grey500),
           ),
           const SizedBox(height: 22),
@@ -672,7 +673,7 @@ class _RatingSheetState extends State<_RatingSheet>
           ),
           const SizedBox(height: 20),
           PrimaryButton(
-            label: 'Submit Rating',
+            label: context.t('submit_rating'),
             onPressed: _rating > 0
                 ? () => widget.onSubmit(
                       _rating,
@@ -684,7 +685,7 @@ class _RatingSheetState extends State<_RatingSheet>
           ),
           TextButton(
             onPressed: () => widget.onSubmit(0, null),
-            child: const Text('Skip'),
+            child: Text(context.t('skip')),
           ),
         ],
       ),

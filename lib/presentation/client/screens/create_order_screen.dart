@@ -142,16 +142,16 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SegmentedButton<bool>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: true,
                               icon: Icon(Icons.trip_origin_rounded),
-                              label: Text('Pickup'),
+                              label: Text(context.t('pickup')),
                             ),
                             ButtonSegment(
                               value: false,
                               icon: Icon(Icons.location_on_outlined),
-                              label: Text('Drop-off'),
+                              label: Text(context.t('dropoff')),
                             ),
                           ],
                           selected: {_editingPickup},
@@ -161,21 +161,21 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                         const SizedBox(height: 10),
                         AppTextField(
                           controller: _phone,
-                          hint: 'Contact phone',
+                          hint: context.t('contact_phone'),
                           keyboardType: TextInputType.phone,
                           validator: Validators.phone,
                         ),
                         const SizedBox(height: 10),
                         AppTextField(
                           controller: _description,
-                          hint: 'Describe the item',
+                          hint: context.t('describe_item'),
                           maxLines: 2,
-                          validator: (v) =>
-                              Validators.required(v, label: 'Description'),
+                          validator: (v) => Validators.required(v,
+                              label: context.t('description')),
                         ),
                         const SizedBox(height: 12),
                         PrimaryButton(
-                          label: 'Publish Request',
+                          label: context.t('publish_request'),
                           isLoading: loading,
                           onPressed: () {
                             if (!_formKey.currentState!.validate()) return;
@@ -206,7 +206,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Tap the map to set the selected pin.',
+                          context.t('tap_map_pin'),
                           style: AppTextStyles.caption,
                         ),
                       ],

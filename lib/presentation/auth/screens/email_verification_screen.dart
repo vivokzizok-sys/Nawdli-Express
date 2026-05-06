@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../shared/widgets/shared_widgets.dart';
 import '../bloc/auth_bloc.dart';
@@ -27,16 +28,18 @@ class EmailVerificationScreen extends StatelessWidget {
                 color: AppColors.accent,
               ),
               const SizedBox(height: 18),
-              const Text('Verify your email', style: AppTextStyles.title1),
+              Text(context.t('verify_email'), style: AppTextStyles.title1),
               const SizedBox(height: 8),
               Text(
-                'We sent a verification link to ${user.email}. The app will continue automatically after verification.',
+                context
+                    .t('verify_email_body')
+                    .replaceAll('{email}', user.email),
                 style: AppTextStyles.body.copyWith(color: AppColors.grey500),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),
               PrimaryButton(
-                label: 'I Verified My Email',
+                label: context.t('i_verified_email'),
                 onPressed: () =>
                     context.read<AuthBloc>().add(AuthRefreshRequested()),
               ),
@@ -45,12 +48,12 @@ class EmailVerificationScreen extends StatelessWidget {
                 onPressed: () => context
                     .read<AuthBloc>()
                     .add(AuthResendVerificationRequested()),
-                child: const Text('Resend email'),
+                child: Text(context.t('resend_email')),
               ),
               TextButton(
                 onPressed: () =>
                     context.read<AuthBloc>().add(AuthSignOutRequested()),
-                child: const Text('Sign out'),
+                child: Text(context.t('sign_out')),
               ),
             ],
           ),

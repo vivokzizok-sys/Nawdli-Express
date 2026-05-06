@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/validators.dart';
 import '../../shared/widgets/shared_widgets.dart';
 import '../bloc/auth_bloc.dart';
@@ -54,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Sign in to manage deliveries and bids.',
+                        context.t('sign_in_subtitle'),
                         style: AppTextStyles.body.copyWith(
                           color: const Color(0xFF667085),
                         ),
@@ -62,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 28),
                       AppTextField(
                         controller: _email,
-                        hint: 'Email',
+                        hint: context.t('email'),
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.email,
                         prefixIcon: const Icon(Icons.mail_outline_rounded),
@@ -70,14 +71,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 12),
                       AppTextField(
                         controller: _password,
-                        hint: 'Password',
+                        hint: context.t('password'),
                         obscureText: true,
                         validator: Validators.password,
                         prefixIcon: const Icon(Icons.lock_outline_rounded),
                       ),
                       const SizedBox(height: 20),
                       PrimaryButton(
-                        label: 'Sign In',
+                        label: context.t('sign_in'),
                         isLoading: loading,
                         onPressed: () {
                           if (!_formKey.currentState!.validate()) return;
@@ -90,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: () => context.push('/signup'),
-                        child: const Text('Create an account'),
+                        child: Text(context.t('create_account')),
                       ),
                     ],
                   ),

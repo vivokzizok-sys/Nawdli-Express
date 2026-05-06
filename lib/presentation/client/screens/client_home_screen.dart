@@ -45,10 +45,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         builder: (context, state) {
           if (state is OrdersLoaded) {
             if (state.orders.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.receipt_long_outlined,
-                title: 'No orders yet',
-                subtitle: 'Create your first Veloce Express request.',
+                title: context.t('no_orders_yet'),
+                subtitle: context.t('create_first_order'),
               );
             }
             return ListView.separated(
