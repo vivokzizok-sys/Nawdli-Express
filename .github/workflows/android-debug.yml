@@ -44,6 +44,25 @@ jobs:
       - name: Prepare Android Gradle wrapper
         run: chmod +x android/gradlew
 
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/veloce-express-release-key.jks
+            {
+              echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+              echo "keyPassword=$ANDROID_KEY_PASSWORD"
+              echo "keyAlias=$ANDROID_KEY_ALIAS"
+              echo "storeFile=app/veloce-express-release-key.jks"
+            } > android/key.properties
+          else
+            echo "Release signing secrets are not configured. APKs will be release builds signed with the local debug fallback."
+          fi
+
       - name: Build release APKs
         run: flutter build apk --release --split-per-abi --tree-shake-icons
 
