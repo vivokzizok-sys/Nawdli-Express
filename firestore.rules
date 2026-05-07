@@ -353,6 +353,21 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    match /driver_reviews/{reviewId} {
+      allow read: if isApproved();
+      allow create: if isClient()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.driverId is string
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() > 0
+        && request.resource.data.comment.size() <= 800;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
     match /app_config/{configId} {
       allow read: if true;
       allow write: if isAdmin();

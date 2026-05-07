@@ -217,9 +217,8 @@ class _MarketplaceHeader extends StatelessWidget {
               ],
             ),
           ),
-          const _RestaurantBanners(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
             child: TextField(
               controller: search,
               decoration: InputDecoration(
@@ -235,6 +234,7 @@ class _MarketplaceHeader extends StatelessWidget {
               ),
             ),
           ),
+          const _RestaurantBanners(),
         ],
       ),
     );
@@ -249,7 +249,7 @@ class _RestaurantBanners extends StatefulWidget {
 }
 
 class _RestaurantBannersState extends State<_RestaurantBanners> {
-  final _controller = PageController(viewportFraction: 0.92);
+  final _controller = PageController();
   Timer? _timer;
   int _index = 0;
 
@@ -281,6 +281,10 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
           .limit(12)
           .snapshots(),
       builder: (context, snap) {
+        final bannerHeight = MediaQuery.sizeOf(context).width * 9 / 16;
+        if (!snap.hasData && !snap.hasError) {
+          return SizedBox(height: bannerHeight);
+        }
         final banners = [...snap.data?.docs ?? const []]
           ..removeWhere((doc) => doc.data()['isActive'] == false)
           ..sort((a, b) {
@@ -288,114 +292,31 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
             final right = (b.data()['sortOrder'] as num?)?.toInt() ?? 0;
             return left.compareTo(right);
           });
-        if (snap.hasError || banners.isEmpty) return const _FallbackBanner();
+        if (snap.hasError || banners.isEmpty) return const SizedBox.shrink();
         return SizedBox(
-          height: 164,
+          height: bannerHeight,
           child: PageView.builder(
             controller: _controller,
             onPageChanged: (value) => _index = value % banners.length,
             itemBuilder: (context, index) {
               final data = banners[index % banners.length].data();
               final image = data['imageBase64'] as String? ?? '';
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: image.isEmpty
-                        ? const _FallbackBanner(inCarousel: true)
-                        : Image.memory(
-                            base64Decode(image),
-                            fit: BoxFit.cover,
-                            filterQuality: FilterQuality.medium,
-                            errorBuilder: (_, __, ___) =>
-                                const _FallbackBanner(inCarousel: true),
-                          ),
-                  ),
-                ),
+              return AspectRatio(
+                aspectRatio: 16 / 9,
+                child: image.isEmpty
+                    ? Container(color: AppColors.surfaceAlt(context))
+                    : Image.memory(
+                        base64Decode(image),
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.medium,
+                        errorBuilder: (_, __, ___) =>
+                            Container(color: AppColors.surfaceAlt(context)),
+                      ),
               );
             },
           ),
         );
       },
-    );
-  }
-}
-
-class _FallbackBanner extends StatelessWidget {
-  final bool inCarousel;
-
-  const _FallbackBanner({this.inCarousel = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final banner = Container(
-      height: 154,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.brandRed,
-        borderRadius: BorderRadius.circular(inCarousel ? 0 : 22),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          PositionedDirectional(
-            end: -28,
-            bottom: -26,
-            child: Container(
-              width: 132,
-              height: 132,
-              decoration: BoxDecoration(
-                color: AppColors.brandYellow.withValues(alpha: 0.34),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          PositionedDirectional(
-            start: -18,
-            top: -18,
-            child: Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.brandGreen.withValues(alpha: 0.24),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  context.t('fresh_restaurants'),
-                  style: AppTextStyles.title2.copyWith(color: AppColors.white),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 230,
-                  child: Text(
-                    context.t('fresh_restaurants_body'),
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.86),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-    if (inCarousel) return banner;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: banner,
     );
   }
 }

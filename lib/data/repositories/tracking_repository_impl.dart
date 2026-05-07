@@ -131,8 +131,11 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _db.runTransaction((tx) async {
         final orderRef = _db.collection('orders').doc(orderId);
         final driverRef = _db.collection('users').doc(driverId);
+        final reviewRef = _db.collection('driver_reviews').doc(orderId);
         final snap = await tx.get(driverRef);
         if (!snap.exists) return;
+        final orderSnap = await tx.get(orderRef);
+        final orderData = orderSnap.data() ?? {};
 
         final data = snap.data()!;
         final oldRating = (data['rating'] as num?)?.toDouble() ?? 0.0;
@@ -151,6 +154,17 @@ class TrackingRepositoryImpl implements TrackingRepository {
           'clientRatingComment': comment,
           'ratedAt': FieldValue.serverTimestamp(),
         });
+        if ((comment ?? '').trim().isNotEmpty) {
+          tx.set(reviewRef, {
+            'driverId': driverId,
+            'orderId': orderId,
+            'clientId': orderData['clientId'],
+            'clientName': orderData['clientName'],
+            'rating': rating,
+            'comment': comment!.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
       });
       final messages = await _db
           .collection('orders')

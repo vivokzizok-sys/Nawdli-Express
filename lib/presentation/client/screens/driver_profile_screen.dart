@@ -139,9 +139,8 @@ class _DriverReviews extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
-          .collection('orders')
+          .collection('driver_reviews')
           .where('driverId', isEqualTo: driverId)
-          .where('status', isEqualTo: 'delivered')
           .orderBy('createdAt', descending: true)
           .limit(30)
           .snapshots(),
@@ -149,12 +148,7 @@ class _DriverReviews extends StatelessWidget {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
         }
-        final reviews = (snap.data?.docs ?? []).where((doc) {
-          final data = doc.data();
-          return data['clientRating'] != null &&
-              ((data['clientRatingComment'] as String?)?.trim().isNotEmpty ??
-                  false);
-        }).toList();
+        final reviews = snap.data?.docs ?? [];
 
         if (reviews.isEmpty) {
           return Container(
@@ -176,8 +170,8 @@ class _DriverReviews extends StatelessWidget {
         return Column(
           children: reviews.map((doc) {
             final data = doc.data();
-            final rating = (data['clientRating'] as num?)?.toDouble() ?? 0;
-            final comment = data['clientRatingComment'] as String? ?? '';
+            final rating = (data['rating'] as num?)?.toDouble() ?? 0;
+            final comment = data['comment'] as String? ?? '';
             final clientName =
                 data['clientName'] as String? ?? context.t('client');
             return Container(
