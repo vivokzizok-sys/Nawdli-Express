@@ -88,28 +88,6 @@ class SettingsScreen extends StatelessWidget {
                     );
                   },
                 ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-                child: DropdownButtonFormField<String>(
-                  value: settings.notificationSound,
-                  dropdownColor: AppColors.surface(context),
-                  decoration: InputDecoration(
-                    labelText: context.t('notification_sound'),
-                    prefixIcon: const Icon(Icons.notifications_active_outlined),
-                  ),
-                  items: AppSettingsController.notificationSounds
-                      .map(
-                        (sound) => DropdownMenuItem(
-                          value: sound.key,
-                          child: Text(sound.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) settings.setNotificationSound(value);
-                  },
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -251,6 +229,8 @@ class _AccountSettingsSheetState extends State<_AccountSettingsSheet> {
   late final TextEditingController _name;
   late final TextEditingController _email;
   late final TextEditingController _phone;
+  late final TextEditingController _wilaya;
+  late final TextEditingController _commune;
   final _password = TextEditingController();
   String? _profilePhotoBase64;
   bool _loading = false;
@@ -261,6 +241,8 @@ class _AccountSettingsSheetState extends State<_AccountSettingsSheet> {
     _name = TextEditingController(text: widget.user.fullName);
     _email = TextEditingController(text: widget.user.email);
     _phone = TextEditingController(text: widget.user.phoneNumber);
+    _wilaya = TextEditingController(text: widget.user.wilaya);
+    _commune = TextEditingController(text: widget.user.commune);
     _profilePhotoBase64 = widget.user.profilePhotoBase64;
   }
 
@@ -269,6 +251,8 @@ class _AccountSettingsSheetState extends State<_AccountSettingsSheet> {
     _name.dispose();
     _email.dispose();
     _phone.dispose();
+    _wilaya.dispose();
+    _commune.dispose();
     _password.dispose();
     super.dispose();
   }
@@ -294,6 +278,8 @@ class _AccountSettingsSheetState extends State<_AccountSettingsSheet> {
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'fullName': _name.text.trim(),
         'phoneNumber': _phone.text.trim(),
+        'wilaya': _wilaya.text.trim(),
+        'commune': _commune.text.trim(),
         'email': newEmail,
         'profilePhotoBase64': _profilePhotoBase64,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -405,6 +391,38 @@ class _AccountSettingsSheetState extends State<_AccountSettingsSheet> {
                         ? null
                         : context.t('algerian_phone_error');
                   },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        controller: _wilaya,
+                        hint: context.t('wilaya'),
+                        validator: (v) {
+                          final text = v?.trim() ?? '';
+                          if (text.isEmpty) return context.t('field_required');
+                          if (text.length < 3)
+                            return context.t('write_clear_value');
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: AppTextField(
+                        controller: _commune,
+                        hint: context.t('commune'),
+                        validator: (v) {
+                          final text = v?.trim() ?? '';
+                          if (text.isEmpty) return context.t('field_required');
+                          if (text.length < 3)
+                            return context.t('write_clear_value');
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 AppTextField(

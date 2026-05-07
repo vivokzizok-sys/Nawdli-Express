@@ -95,10 +95,6 @@ class _VeloceExpressAppState extends State<VeloceExpressApp> {
 
   Future<void> _initNotifications() async {
     await _notificationSvc.initialize();
-    _notificationSvc.setPreferredSound(_settingsController.notificationSound);
-    _settingsController.addListener(() {
-      _notificationSvc.setPreferredSound(_settingsController.notificationSound);
-    });
     final current = _authBloc.state;
     if (current is AuthAuthenticated) {
       await _notificationSvc.watchUserNotifications(current.user.uid);

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 
 import '../../core/errors/failures.dart';
+import '../../core/services/push_notification_sender.dart';
 import '../../domain/entities/bid_entity.dart';
 import '../../domain/entities/order_entity.dart';
 import '../../domain/entities/user_entity.dart';
@@ -36,29 +37,35 @@ class OrderRepositoryImpl implements OrderRepository {
         'bidCount': 0,
       });
       if (order.driverId != null) {
+        const title = 'New delivery request';
+        final body = '${order.clientName} sent you a delivery request.';
         await _db.collection('notifications').add({
           'userId': order.driverId,
           'orderId': ref.id,
           'type': 'direct_request',
-          'title': 'New delivery request',
-          'body': '${order.clientName} sent you a delivery request.',
+          'title': title,
+          'body': body,
           'createdBy': order.clientId,
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await _sendPushQuietly(order.driverId!, title, body);
       }
       if (order.storeId != null) {
+        const title = 'New restaurant order';
+        final body =
+            '${order.clientName} ordered ${order.storeItemName ?? order.description}.';
         await _db.collection('notifications').add({
           'userId': order.storeId,
           'orderId': ref.id,
           'type': 'store_order',
-          'title': 'New restaurant order',
-          'body':
-              '${order.clientName} ordered ${order.storeItemName ?? order.description}.',
+          'title': title,
+          'body': body,
           'createdBy': order.clientId,
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await _sendPushQuietly(order.storeId!, title, body);
       }
       final snap = await ref.get();
       return Right(OrderModel.fromFirestore(snap));
@@ -221,16 +228,19 @@ class OrderRepositoryImpl implements OrderRepository {
         'acceptedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      const title = 'Price accepted';
+      const body = 'The client accepted your delivery price.';
       await _db.collection('notifications').add({
         'userId': driverId,
         'orderId': orderId,
         'type': 'price_accepted',
-        'title': 'Price accepted',
-        'body': 'The client accepted your delivery price.',
+        'title': title,
+        'body': body,
         'createdBy': data?['clientId'],
         'read': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      await _sendPushQuietly(driverId, title, body);
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left(NetworkFailure(e.message ?? 'Failed to accept price'));
@@ -250,16 +260,19 @@ class OrderRepositoryImpl implements OrderRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       });
       if (driverId != null) {
+        const title = 'Price rejected';
+        const body = 'The client rejected your delivery price.';
         await _db.collection('notifications').add({
           'userId': driverId,
           'orderId': orderId,
           'type': 'price_rejected',
-          'title': 'Price rejected',
-          'body': 'The client rejected your delivery price.',
+          'title': title,
+          'body': body,
           'createdBy': data?['clientId'],
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await _sendPushQuietly(driverId, title, body);
       }
       return const Right(null);
     } on FirebaseException catch (e) {
@@ -308,16 +321,19 @@ class OrderRepositoryImpl implements OrderRepository {
         });
       });
 
+      const title = 'Bid accepted';
+      const body = 'Your bid was accepted.';
       await _db.collection('notifications').add({
         'userId': bid.driverId,
         'orderId': orderId,
         'type': 'bid_accepted',
-        'title': 'Bid accepted',
-        'body': 'Your bid was accepted.',
+        'title': title,
+        'body': body,
         'createdBy': (await orderRef.get()).data()?['clientId'],
         'read': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      await _sendPushQuietly(bid.driverId, title, body);
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left(NetworkFailure(e.message ?? 'Failed to accept bid'));
@@ -372,5 +388,14 @@ class OrderRepositoryImpl implements OrderRepository {
       'read': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await _sendPushQuietly(clientId, title, body);
+  }
+
+  Future<void> _sendPushQuietly(String toUserId, String title, String body) {
+    return PushNotificationSender.send(
+      toUserId: toUserId,
+      title: title,
+      body: body,
+    ).catchError((_) {});
   }
 }

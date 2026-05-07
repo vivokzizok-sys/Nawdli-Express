@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/push_notification_sender.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/order_model.dart';
 import '../../../domain/entities/order_entity.dart';
@@ -137,6 +138,13 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
         'storeName': widget.store.fullName,
         'storePhone': widget.store.phoneNumber,
         'storeAddress': widget.store.storeAddress,
+        'storeWilaya': widget.store.wilaya,
+        'storeCommune': widget.store.commune,
+        'searchKeywords': _buildSearchKeywords(
+          name: _name.text.trim(),
+          restaurant: widget.store.fullName,
+          description: _description.text.trim(),
+        ),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -593,6 +601,9 @@ class _DriverSelectionSheet extends StatelessWidget {
     final data = driver.data();
     if (data['isAvailable'] == false) return;
     final db = FirebaseFirestore.instance;
+    final pushTitle = context.t('store_delivery_assigned');
+    final restaurantName = order.storeName ?? context.t('restaurant');
+    final pushBody = '$restaurantName - ${order.dropoffAddress}';
     await db.collection('orders').doc(order.orderId).update({
       'status': 'accepted',
       'driverId': driver.id,
@@ -612,6 +623,11 @@ class _DriverSelectionSheet extends StatelessWidget {
       'read': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await PushNotificationSender.send(
+      toUserId: driver.id,
+      title: pushTitle,
+      body: pushBody,
+    ).catchError((_) {});
     if (context.mounted) Navigator.pop(context);
   }
 }
@@ -621,6 +637,33 @@ class _DriverAvailabilityData {
   final Set<String> busyDriverIds;
 
   const _DriverAvailabilityData(this.drivers, this.busyDriverIds);
+}
+
+List<String> _buildSearchKeywords({
+  required String name,
+  required String restaurant,
+  required String description,
+}) {
+  final words = <String>{};
+  for (final part in [name, restaurant, description]) {
+    final normalized = _normalizeSearch(part);
+    if (normalized.isEmpty) continue;
+    words.add(normalized);
+    words.addAll(normalized.split(' ').where((word) => word.length > 1));
+  }
+  return words.toList();
+}
+
+String _normalizeSearch(String value) {
+  return value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[\u064b-\u065f]'), '')
+      .replaceAll('أ', 'ا')
+      .replaceAll('إ', 'ا')
+      .replaceAll('آ', 'ا')
+      .replaceAll('ة', 'ه')
+      .replaceAll(RegExp(r'\s+'), ' ');
 }
 
 class _DriverChoiceTile extends StatelessWidget {

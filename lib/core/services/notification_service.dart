@@ -16,62 +16,13 @@ class NotificationService {
         _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static const _defaultChannel = AndroidNotificationChannel(
-    'veloce_express_alerts_custom_v1',
+    'veloce_express_alerts_system_v1',
     'Veloce Express alerts',
     description: 'General Veloce Express notifications.',
     importance: Importance.max,
     playSound: true,
     enableVibration: true,
-    sound: RawResourceAndroidNotificationSound('message_sound'),
   );
-
-  static const _channels = <String, AndroidNotificationChannel>{
-    'direct_request': AndroidNotificationChannel(
-      'veloce_express_direct_request_v1',
-      'Delivery requests',
-      description: 'New delivery requests.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      sound: RawResourceAndroidNotificationSound('whatsapp_notification'),
-    ),
-    'chat_message': AndroidNotificationChannel(
-      'veloce_express_chat_v1',
-      'Trip chat',
-      description: 'Messages between client and driver.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      sound: RawResourceAndroidNotificationSound('iphone_sms'),
-    ),
-    'delivered': AndroidNotificationChannel(
-      'veloce_express_delivered_v1',
-      'Delivery completed',
-      description: 'Delivery completion notifications.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      sound: RawResourceAndroidNotificationSound('delivered_message'),
-    ),
-    'trip_started': AndroidNotificationChannel(
-      'veloce_express_trip_started_v1',
-      'Trip started',
-      description: 'Active trip notifications.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      sound: RawResourceAndroidNotificationSound('sms_android'),
-    ),
-    'support_reply': AndroidNotificationChannel(
-      'veloce_express_support_v1',
-      'Support replies',
-      description: 'Replies from support.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      sound: RawResourceAndroidNotificationSound('notice11'),
-    ),
-  };
 
   final FirebaseFirestore _firestore;
   final FlutterLocalNotificationsPlugin _plugin;
@@ -79,12 +30,7 @@ class NotificationService {
   StreamSubscription<RemoteMessage>? _fcmForegroundSub;
   StreamSubscription<String>? _tokenRefreshSub;
   bool _initializedSnapshot = false;
-  String _preferredSound = 'message_sound';
   int _notificationId = 1000;
-
-  void setPreferredSound(String sound) {
-    _preferredSound = sound;
-  }
 
   Future<void> initialize() async {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -94,9 +40,6 @@ class NotificationService {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await android?.createNotificationChannel(_defaultChannel);
-    for (final channel in _channels.values) {
-      await android?.createNotificationChannel(channel);
-    }
     await android?.requestNotificationsPermission();
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
@@ -124,28 +67,14 @@ class NotificationService {
     String? type,
     String? payload,
   }) async {
-    final channel = _channels[type] ?? _defaultChannel;
-    final preferredChannel = AndroidNotificationChannel(
-      'veloce_express_user_sound_$_preferredSound',
-      'Selected notification sound',
-      description: 'User selected Veloce Express notification sound.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      sound: RawResourceAndroidNotificationSound(_preferredSound),
-    );
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    await android?.createNotificationChannel(preferredChannel);
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
-        preferredChannel.id,
-        preferredChannel.name,
-        channelDescription: channel.description,
+        _defaultChannel.id,
+        _defaultChannel.name,
+        channelDescription: _defaultChannel.description,
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,
-        sound: preferredChannel.sound,
         enableVibration: true,
         category: AndroidNotificationCategory.message,
         icon: '@mipmap/ic_launcher',

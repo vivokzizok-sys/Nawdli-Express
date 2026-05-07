@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Veloce Express</title>
+    <meta
+      name="description"
+      content="Veloce Express تطبيق توصيل محلي للمطاعم والطلبات الحرة في عين الحجل."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #171717;
+        --muted: #6d6d6d;
+        --line: #ece7df;
+        --paper: #fffaf2;
+        --surface: #ffffff;
+        --red: #df1f18;
+        --green: #70c94d;
+        --gold: #ffda59;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Tahoma, Arial, sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      .hero {
+        min-height: 92vh;
+        display: grid;
+        align-items: center;
+        padding: 28px clamp(18px, 4vw, 72px);
+        background:
+          radial-gradient(circle at 20% 20%, rgba(112, 201, 77, 0.2), transparent 28%),
+          linear-gradient(135deg, #fffaf2 0%, #ffffff 52%, #ffe7dc 100%);
+      }
+
+      .nav {
+        position: fixed;
+        top: 16px;
+        left: clamp(16px, 4vw, 48px);
+        right: clamp(16px, 4vw, 48px);
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+        border-radius: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--red), #ff6b4d);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .download {
+        border: 0;
+        border-radius: 14px;
+        background: var(--ink);
+        color: #fff;
+        padding: 12px 16px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .hero-grid {
+        width: min(1120px, 100%);
+        margin: 58px auto 0;
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: clamp(24px, 5vw, 64px);
+        align-items: center;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(46px, 9vw, 112px);
+        line-height: 0.92;
+        letter-spacing: 0;
+      }
+
+      .green {
+        color: var(--green);
+      }
+
+      .red {
+        color: var(--red);
+      }
+
+      .lead {
+        max-width: 620px;
+        margin: 24px 0;
+        font-size: clamp(18px, 2.1vw, 25px);
+        line-height: 1.75;
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .primary,
+      .secondary {
+        border-radius: 16px;
+        padding: 15px 20px;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .primary {
+        background: var(--red);
+        color: #fff;
+      }
+
+      .secondary {
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .phone {
+        aspect-ratio: 9 / 16;
+        width: min(360px, 82vw);
+        justify-self: center;
+        border-radius: 42px;
+        background: #151515;
+        padding: 14px;
+        box-shadow: 0 38px 90px rgba(80, 35, 16, 0.22);
+      }
+
+      .screen {
+        height: 100%;
+        border-radius: 32px;
+        background: #fff;
+        padding: 18px;
+        overflow: hidden;
+      }
+
+      .banner {
+        aspect-ratio: 16 / 9;
+        border-radius: 22px;
+        background: linear-gradient(135deg, var(--red), #ff7a59);
+        color: #fff;
+        display: grid;
+        align-content: center;
+        padding: 20px;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      .search {
+        margin: 14px 0;
+        padding: 13px 14px;
+        border-radius: 16px;
+        background: #f4f4f4;
+        color: #777;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .photo {
+        height: 82px;
+        background: linear-gradient(135deg, var(--gold), #fff0a8);
+      }
+
+      .card p {
+        margin: 10px;
+        font-weight: 800;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        width: min(1120px, calc(100% - 32px));
+        margin: -32px auto 56px;
+      }
+
+      .feature {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .feature strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .feature span {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      @media (max-width: 820px) {
+        .hero-grid,
+        .features {
+          grid-template-columns: 1fr;
+        }
+
+        .phone {
+          width: min(320px, 100%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="brand"><span class="mark">V</span> Veloce Express</div>
+      <a class="download" href="veloce-express.apk">تحميل التطبيق</a>
+    </nav>
+
+    <main class="hero">
+      <section class="hero-grid">
+        <div>
+          <h1><span class="green">Veloce</span><br /><span class="red">Express</span></h1>
+          <p class="lead">
+            تطبيق توصيل محلي للمطاعم والطلبات الحرة. الزبون يطلب، المطعم يجهز،
+            والسائق يوصل بسرعة داخل المدينة.
+          </p>
+          <div class="actions">
+            <a class="primary" href="veloce-express.apk">تحميل APK</a>
+            <a class="secondary" href="#features">كيف يعمل؟</a>
+          </div>
+        </div>
+        <div class="phone" aria-label="Veloce Express app preview">
+          <div class="screen">
+            <div class="banner">مطاعم قريبة منك</div>
+            <div class="search">ابحث عن أكلة أو مطعم</div>
+            <div class="cards">
+              <div class="card"><div class="photo"></div><p>برغر</p></div>
+              <div class="card"><div class="photo"></div><p>بيتزا</p></div>
+              <div class="card"><div class="photo"></div><p>شاورما</p></div>
+              <div class="card"><div class="photo"></div><p>مشروبات</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="features" id="features">
+      <div class="feature">
+        <strong>مطاعم ومنتجات</strong>
+        <span>واجهة رئيسية تعرض المنتجات مباشرة مع صور واضحة وبحث سريع.</span>
+      </div>
+      <div class="feature">
+        <strong>توصيل حر</strong>
+        <span>الزبون يستطيع اختيار سائق مباشرة لطلبات خارج المطاعم.</span>
+      </div>
+      <div class="feature">
+        <strong>إشعارات آمنة</strong>
+        <span>الإشعارات ترسل عبر Firebase Functions بدون مفاتيح داخل التطبيق.</span>
+      </div>
+    </section>
+  </body>
+</html>

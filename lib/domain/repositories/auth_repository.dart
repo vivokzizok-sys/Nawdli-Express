@@ -14,6 +14,8 @@ abstract class AuthRepository {
     required String password,
     required String fullName,
     required String phoneNumber,
+    required String wilaya,
+    required String commune,
     required UserRole role,
     VehicleType? vehicleType,
     File? vehiclePhoto,

@@ -71,6 +71,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     required String fullName,
     required String phoneNumber,
+    required String wilaya,
+    required String commune,
     required UserRole role,
     VehicleType? vehicleType,
     File? vehiclePhoto,
@@ -78,6 +80,11 @@ class AuthRepositoryImpl implements AuthRepository {
     String? storeAddress,
     File? profilePhoto,
   }) async {
+    if (wilaya.trim().isEmpty || commune.trim().isEmpty) {
+      return const Left(
+        ValidationFailure('Wilaya and commune are required'),
+      );
+    }
     if (role == UserRole.driver &&
         (vehicleType == null || vehiclePhoto == null)) {
       return const Left(
@@ -140,6 +147,8 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email.trim(),
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim(),
+        wilaya: wilaya.trim(),
+        commune: commune.trim(),
         role: role,
         isEmailVerified: false,
         isApproved: false,

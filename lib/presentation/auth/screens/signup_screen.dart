@@ -25,6 +25,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
+  final _wilaya = TextEditingController();
+  final _commune = TextEditingController();
   final _password = TextEditingController();
   final _storeAddress = TextEditingController();
   UserRole _role = UserRole.client;
@@ -38,6 +40,8 @@ class _SignupScreenState extends State<SignupScreen> {
     _name.dispose();
     _email.dispose();
     _phone.dispose();
+    _wilaya.dispose();
+    _commune.dispose();
     _password.dispose();
     _storeAddress.dispose();
     super.dispose();
@@ -150,6 +154,40 @@ class _SignupScreenState extends State<SignupScreen> {
                       validator: (v) => Validators.phone(v) == null
                           ? null
                           : context.t('algerian_phone_error'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppTextField(
+                            controller: _wilaya,
+                            hint: context.t('wilaya'),
+                            validator: (v) {
+                              final text = v?.trim() ?? '';
+                              if (text.isEmpty)
+                                return context.t('field_required');
+                              if (text.length < 3)
+                                return context.t('write_clear_value');
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppTextField(
+                            controller: _commune,
+                            hint: context.t('commune'),
+                            validator: (v) {
+                              final text = v?.trim() ?? '';
+                              if (text.isEmpty)
+                                return context.t('field_required');
+                              if (text.length < 3)
+                                return context.t('write_clear_value');
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     AppTextField(
@@ -325,6 +363,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 password: _password.text,
                                 fullName: _name.text,
                                 phoneNumber: _phone.text,
+                                wilaya: _wilaya.text,
+                                commune: _commune.text,
                                 role: _role,
                                 vehicleType: _role == UserRole.driver
                                     ? _vehicleType

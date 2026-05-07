@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -6,55 +8,317 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/push_notification_sender.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/validators.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../shared/widgets/shared_widgets.dart';
 
-class RestaurantProductsSection extends StatelessWidget {
+class RestaurantProductsSection extends StatefulWidget {
   const RestaurantProductsSection({super.key});
 
   static const deliveryFee = 100.0;
 
   @override
+  State<RestaurantProductsSection> createState() =>
+      _RestaurantProductsSectionState();
+}
+
+class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
+  final _search = TextEditingController();
+  int _rotation = 0;
+  Timer? _rotationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(() => setState(() {}));
+    _rotationTimer = Timer.periodic(
+      const Duration(seconds: 45),
+      (_) => setState(() => _rotation++),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rotationTimer?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collectionGroup('menu_items')
-          .where('isAvailable', isEqualTo: true)
-          .limit(50)
+          .limit(100)
           .snapshots(),
       builder: (context, snap) {
         if (snap.hasError) {
           return EmptyState(
             icon: Icons.error_outline_rounded,
             title: context.t('no_menu_items'),
-            subtitle: context.t('store_menu_empty'),
+            subtitle: context.t('products_load_error'),
           );
         }
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
         }
-        final products = snap.data!.docs;
-        if (products.isEmpty) {
-          return EmptyState(
-            icon: Icons.restaurant_menu_outlined,
-            title: context.t('no_menu_items'),
-            subtitle: context.t('store_menu_empty'),
-          );
-        }
-        return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: products.length,
-          itemBuilder: (_, index) => _ProductCard(doc: products[index]),
+
+        final products = _filterProducts(
+          snap.data!.docs,
+          wilaya: user.wilaya,
+          query: _search.text,
+        );
+        final featured = [...products]
+          ..shuffle(Random(_rotation + DateTime.now().day));
+        final topProducts = featured.take(8).toList();
+
+        return CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: _RestaurantBanners()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                child: TextField(
+                  controller: _search,
+                  decoration: InputDecoration(
+                    hintText: context.t('search_food_or_restaurant'),
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: context.t('cancel'),
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: _search.clear,
+                          ),
+                  ),
+                ),
+              ),
+            ),
+            if (topProducts.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _FeaturedProductsRow(products: topProducts),
+              ),
+            if (products.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyState(
+                  icon: Icons.restaurant_menu_outlined,
+                  title: context.t('no_menu_items'),
+                  subtitle: context.t('store_menu_empty'),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) => _ProductCard(doc: products[index]),
+                    childCount: products.length,
+                  ),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.64,
+                  ),
+                ),
+              ),
+          ],
         );
       },
+    );
+  }
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _filterProducts(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, {
+    required String wilaya,
+    required String query,
+  }) {
+    final normalizedQuery = _normalize(query);
+    final normalizedWilaya = _normalize(wilaya);
+    return docs.where((doc) {
+      final data = doc.data();
+      if (data['isAvailable'] == false) return false;
+      final productWilaya = _normalize(data['storeWilaya'] as String? ?? '');
+      if (normalizedWilaya.isNotEmpty &&
+          productWilaya.isNotEmpty &&
+          productWilaya != normalizedWilaya) {
+        return false;
+      }
+      if (normalizedQuery.isEmpty) return true;
+
+      final keywords = (data['searchKeywords'] as List<dynamic>? ?? const [])
+          .map((value) => _normalize(value.toString()))
+          .join(' ');
+      final haystack = [
+        data['name'],
+        data['storeName'],
+        data['description'],
+        keywords,
+      ].map((value) => _normalize(value?.toString() ?? '')).join(' ');
+      return haystack.contains(normalizedQuery);
+    }).toList();
+  }
+}
+
+class _RestaurantBanners extends StatefulWidget {
+  const _RestaurantBanners();
+
+  @override
+  State<_RestaurantBanners> createState() => _RestaurantBannersState();
+}
+
+class _RestaurantBannersState extends State<_RestaurantBanners> {
+  final _controller = PageController(viewportFraction: 0.9);
+  Timer? _timer;
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!_controller.hasClients) return;
+      final next = _index + 1;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('app_banners')
+          .where('isActive', isEqualTo: true)
+          .orderBy('sortOrder')
+          .limit(12)
+          .snapshots(),
+      builder: (context, snap) {
+        final banners = snap.data?.docs ?? const [];
+        if (banners.isEmpty) return const SizedBox(height: 8);
+        return SizedBox(
+          height: 178,
+          child: PageView.builder(
+            controller: _controller,
+            onPageChanged: (value) => _index = value % banners.length,
+            itemBuilder: (context, index) {
+              final data = banners[index % banners.length].data();
+              final image = data['imageBase64'] as String? ?? '';
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: image.isEmpty
+                        ? Container(color: AppColors.surfaceAlt(context))
+                        : Image.memory(
+                            base64Decode(image),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: AppColors.surfaceAlt(context),
+                              child: const Icon(Icons.broken_image_outlined),
+                            ),
+                          ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _FeaturedProductsRow extends StatelessWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> products;
+
+  const _FeaturedProductsRow({required this.products});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 126,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: products.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final doc = products[index];
+          final data = doc.data();
+          final image = data['imageBase64'] as String?;
+          final price = (data['price'] as num?)?.toDouble() ?? 0;
+          return InkWell(
+            onTap: () => _showRestaurantOrderSheet(context, doc),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 236,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 104,
+                    height: double.infinity,
+                    child: _ProductImage(image: image),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            data['name'] as String? ?? '',
+                            style: AppTextStyles.bodyMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            data['storeName'] as String? ??
+                                context.t('restaurant'),
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textSecondary(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${price.toStringAsFixed(0)} DA',
+                            style: AppTextStyles.captionMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -75,67 +339,87 @@ class _ProductCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border(context)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 92,
-            width: double.infinity,
-            child: image == null || image.isEmpty
-                ? Container(
-                    color: AppColors.surfaceAlt(context),
-                    child: const Icon(Icons.fastfood_outlined),
-                  )
-                : Image.memory(
-                    base64Decode(image),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.surfaceAlt(context),
-                      child: const Icon(Icons.broken_image_outlined),
-                    ),
-                  ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: AppTextStyles.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  restaurant,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary(context),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${price.toStringAsFixed(0)} DA',
-                  style: AppTextStyles.captionMedium,
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => _showRestaurantOrderSheet(context, doc),
-                    child: Text(context.t('order_now')),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: constraints.maxHeight * 0.55,
+                width: double.infinity,
+                child: _ProductImage(image: image),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: AppTextStyles.bodyMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        restaurant,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${price.toStringAsFixed(0)} DA',
+                        style: AppTextStyles.captionMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () =>
+                              _showRestaurantOrderSheet(context, doc),
+                          child: Text(context.t('order_now')),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProductImage extends StatelessWidget {
+  final String? image;
+
+  const _ProductImage({this.image});
+
+  @override
+  Widget build(BuildContext context) {
+    if (image == null || image!.isEmpty) {
+      return Container(
+        color: AppColors.surfaceAlt(context),
+        child: const Icon(Icons.fastfood_outlined),
+      );
+    }
+    return Image.memory(
+      base64Decode(image!),
+      fit: BoxFit.cover,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (_, __, ___) => Container(
+        color: AppColors.surfaceAlt(context),
+        child: const Icon(Icons.broken_image_outlined),
       ),
     );
   }
@@ -352,21 +636,30 @@ class _RestaurantOrderSheetState extends State<_RestaurantOrderSheet> {
         'deliveryFee': RestaurantProductsSection.deliveryFee,
         'productsTotal': productsTotal,
         'totalAmount': total,
+        'wilaya': user.wilaya,
+        'commune': user.commune,
         'bidCount': 0,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      final title = context.t('new_restaurant_order');
+      final body = '${_name.text.trim()} - ${product['name']}';
       batch.set(notificationRef, {
         'userId': storeId,
         'orderId': orderRef.id,
         'type': 'store_order',
-        'title': 'New restaurant order',
-        'body': '${_name.text.trim()} ordered ${product['name']}',
+        'title': title,
+        'body': body,
         'createdBy': user.uid,
         'read': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
       await batch.commit();
+      await PushNotificationSender.send(
+        toUserId: storeId,
+        title: title,
+        body: body,
+      ).catchError((_) {});
 
       if (!mounted) return;
       Navigator.pop(context);
@@ -405,4 +698,16 @@ class _TotalRow extends StatelessWidget {
       ],
     );
   }
+}
+
+String _normalize(String value) {
+  return value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[\u064b-\u065f]'), '')
+      .replaceAll('أ', 'ا')
+      .replaceAll('إ', 'ا')
+      .replaceAll('آ', 'ا')
+      .replaceAll('ة', 'ه')
+      .replaceAll(RegExp(r'\s+'), ' ');
 }

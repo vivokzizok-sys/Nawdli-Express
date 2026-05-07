@@ -28,6 +28,8 @@ class AuthSignUpRequested extends AuthEvent {
   final String password;
   final String fullName;
   final String phoneNumber;
+  final String wilaya;
+  final String commune;
   final UserRole role;
   final VehicleType? vehicleType;
   final File? vehiclePhoto;
@@ -40,6 +42,8 @@ class AuthSignUpRequested extends AuthEvent {
     required this.password,
     required this.fullName,
     required this.phoneNumber,
+    required this.wilaya,
+    required this.commune,
     required this.role,
     this.vehicleType,
     this.vehiclePhoto,
@@ -77,6 +81,8 @@ class AuthEmailUnverified extends AuthState {
         user.fullName,
         user.phoneNumber,
         user.profilePhotoBase64,
+        user.wilaya,
+        user.commune,
       ];
 }
 
@@ -90,6 +96,8 @@ class AuthPendingApproval extends AuthState {
         user.fullName,
         user.phoneNumber,
         user.profilePhotoBase64,
+        user.wilaya,
+        user.commune,
       ];
 }
 
@@ -105,6 +113,8 @@ class AuthAuthenticated extends AuthState {
         user.phoneNumber,
         user.email,
         user.profilePhotoBase64,
+        user.wilaya,
+        user.commune,
         user.rating,
         user.totalDeliveries,
       ];
@@ -163,6 +173,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       password: event.password,
       fullName: event.fullName,
       phoneNumber: event.phoneNumber,
+      wilaya: event.wilaya,
+      commune: event.commune,
       role: event.role,
       vehicleType: event.vehicleType,
       vehiclePhoto: event.vehiclePhoto,

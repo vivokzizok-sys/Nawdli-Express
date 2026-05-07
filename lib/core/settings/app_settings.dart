@@ -3,51 +3,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum AppLanguage { en, ar }
 
-class NotificationSoundOption {
-  final String key;
-  final String label;
-
-  const NotificationSoundOption(this.key, this.label);
-}
-
 class AppSettingsController extends ChangeNotifier {
   static const _themeKey = 'theme_mode';
-  static const _notificationSoundKey = 'notification_sound';
-
-  static const notificationSounds = <NotificationSoundOption>[
-    NotificationSoundOption('message_sound', 'Message sound'),
-    NotificationSoundOption('iphone_sms', 'iPhone SMS'),
-    NotificationSoundOption('sms_android', 'Android SMS'),
-    NotificationSoundOption('delivered_message', 'Delivered message'),
-    NotificationSoundOption('whatsapp_notification', 'WhatsApp style'),
-    NotificationSoundOption('notice11', 'Notice'),
-    NotificationSoundOption('calm_system', 'Calm system'),
-    NotificationSoundOption('melodic_calm', 'Melodic calm'),
-    NotificationSoundOption('multimedia_message', 'Multimedia message'),
-    NotificationSoundOption('pleasant_signal', 'Pleasant signal'),
-    NotificationSoundOption('sms_sound', 'SMS sound'),
-    NotificationSoundOption('sms_sound_alt', 'SMS sound alt'),
-    NotificationSoundOption('social_logout', 'Social logout'),
-  ];
 
   ThemeMode _themeMode = ThemeMode.light;
   final AppLanguage _language = AppLanguage.ar;
-  String _notificationSound = 'message_sound';
 
   ThemeMode get themeMode => _themeMode;
   AppLanguage get language => _language;
-  String get notificationSound => _notificationSound;
   Locale get locale => const Locale('ar');
   TextDirection get textDirection => TextDirection.rtl;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTheme = prefs.getString(_themeKey);
-    final savedSound = prefs.getString(_notificationSoundKey);
     _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
-    if (notificationSounds.any((sound) => sound.key == savedSound)) {
-      _notificationSound = savedSound!;
-    }
     notifyListeners();
   }
 
@@ -56,14 +26,6 @@ class AppSettingsController extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, mode == ThemeMode.dark ? 'dark' : 'light');
-  }
-
-  Future<void> setNotificationSound(String soundKey) async {
-    if (!notificationSounds.any((sound) => sound.key == soundKey)) return;
-    _notificationSound = soundKey;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_notificationSoundKey, soundKey);
   }
 }
 
@@ -376,6 +338,18 @@ class AppStrings {
         'A new version is required to continue using Veloce Express.',
     'download_update': 'Download update',
     'image_too_large': 'Image is too large. Choose a smaller photo.',
+    'wilaya': 'Wilaya',
+    'commune': 'Commune',
+    'write_clear_value': 'Write a clear value',
+    'products_load_error': 'Products could not be loaded.',
+    'search_food_or_restaurant': 'Search food or restaurant',
+    'new_restaurant_order': 'New restaurant order',
+    'store_delivery_assigned': 'Restaurant delivery assigned',
+    'banners': 'Banners',
+    'add_banner': 'Add banner',
+    'no_banners': 'No banners',
+    'add_first_banner': 'Add the first 16:9 banner for the client home.',
+    'show_banner': 'Show banner',
   };
 
   static const _ar = <String, String>{
@@ -694,6 +668,18 @@ class AppStrings {
         '\u064a\u062c\u0628 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0646\u0633\u062e\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 \u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 Veloce Express.',
     'download_update':
         '\u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u062a\u062d\u062f\u064a\u062b',
+    'wilaya': 'الولاية',
+    'commune': 'البلدية',
+    'write_clear_value': 'اكتب قيمة واضحة',
+    'products_load_error': 'تعذر تحميل منتجات المطاعم.',
+    'search_food_or_restaurant': 'ابحث عن أكلة أو مطعم',
+    'new_restaurant_order': 'طلب جديد من مطعم',
+    'store_delivery_assigned': 'تم تعيين توصيلة مطعم',
+    'banners': 'الصور',
+    'add_banner': 'إضافة صورة',
+    'no_banners': 'لا توجد صور',
+    'add_first_banner': 'أضف أول صورة علوية بحجم 16:9 لواجهة الزبون.',
+    'show_banner': 'إظهار الصورة',
   };
 
   static String translate(AppLanguage language, String key) {

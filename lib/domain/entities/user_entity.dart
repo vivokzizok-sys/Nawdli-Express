@@ -57,6 +57,8 @@ class UserEntity {
   final String email;
   final String fullName;
   final String phoneNumber;
+  final String wilaya;
+  final String commune;
   final UserRole role;
   final bool isEmailVerified;
   final bool isApproved;
@@ -76,6 +78,8 @@ class UserEntity {
     required this.email,
     required this.fullName,
     required this.phoneNumber,
+    required this.wilaya,
+    required this.commune,
     required this.role,
     required this.isEmailVerified,
     required this.isApproved,
@@ -105,6 +109,8 @@ class UserEntity {
       email: email,
       fullName: fullName,
       phoneNumber: phoneNumber,
+      wilaya: wilaya,
+      commune: commune,
       role: role,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isApproved: isApproved ?? this.isApproved,

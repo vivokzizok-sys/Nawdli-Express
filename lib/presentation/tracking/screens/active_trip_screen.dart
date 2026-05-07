@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/push_notification_sender.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/currency.dart';
 import '../../../domain/entities/order_entity.dart';
@@ -631,6 +632,11 @@ class _TripChatSheetState extends State<_TripChatSheet> {
         'read': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      await PushNotificationSender.send(
+        toUserId: widget.otherParty.uid,
+        title: widget.me.fullName,
+        body: text,
+      ).catchError((_) {});
       _messageCtrl.clear();
     } finally {
       if (mounted) setState(() => _sending = false);

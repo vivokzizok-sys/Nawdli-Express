@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:logger/logger.dart';
 
 import '../../core/errors/failures.dart';
+import '../../core/services/push_notification_sender.dart';
 import '../../domain/entities/order_entity.dart';
 import '../../domain/repositories/tracking_repository.dart';
 
@@ -64,16 +65,19 @@ class TrackingRepositoryImpl implements TrackingRepository {
       final clientId = data?['clientId'] as String?;
       final driverId = data?['driverId'] as String?;
       if (clientId != null) {
+        const title = 'Delivery started';
+        const body = 'Your driver started the delivery.';
         await _db.collection('notifications').add({
           'userId': clientId,
           'orderId': orderId,
           'type': 'trip_started',
-          'title': 'Delivery started',
-          'body': 'Your driver started the delivery.',
+          'title': title,
+          'body': body,
           'createdBy': driverId,
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await _sendPushQuietly(clientId, title, body);
       }
       return const Right(null);
     } on FirebaseException catch (e) {
@@ -95,16 +99,20 @@ class TrackingRepositoryImpl implements TrackingRepository {
       final clientId = data?['clientId'] as String?;
       final driverId = data?['driverId'] as String?;
       if (clientId != null) {
+        const title = 'Delivery completed';
+        const body =
+            'Your order was marked as delivered. Please rate the driver.';
         await _db.collection('notifications').add({
           'userId': clientId,
           'orderId': orderId,
           'type': 'delivered',
-          'title': 'Delivery completed',
-          'body': 'Your order was marked as delivered. Please rate the driver.',
+          'title': title,
+          'body': body,
           'createdBy': driverId,
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await _sendPushQuietly(clientId, title, body);
       }
       return const Right(null);
     } on FirebaseException catch (e) {
@@ -163,5 +171,13 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (_) {
       return const Left(UnexpectedFailure('Rating failed'));
     }
+  }
+
+  Future<void> _sendPushQuietly(String toUserId, String title, String body) {
+    return PushNotificationSender.send(
+      toUserId: toUserId,
+      title: title,
+      body: body,
+    ).catchError((_) {});
   }
 }

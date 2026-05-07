@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/push_notification_sender.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/currency.dart';
 import '../../../presentation/auth/bloc/auth_bloc.dart';
@@ -27,7 +29,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 4, vsync: this);
+    _tabCtrl = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -76,6 +78,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Tab(text: context.t('orders')),
             Tab(text: context.t('users')),
             Tab(text: context.t('tickets')),
+            Tab(text: context.t('banners')),
           ],
         ),
       ),
@@ -86,6 +89,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           _OrdersTab(db: _db),
           _UsersTab(db: _db),
           _TicketsTab(db: _db),
+          _BannersTab(db: _db),
         ],
       ),
     );
@@ -1271,6 +1275,136 @@ Future<void> _replyToTicket(
     'read': false,
     'createdAt': FieldValue.serverTimestamp(),
   });
+  await PushNotificationSender.send(
+    toUserId: userId,
+    title: 'Support reply',
+    body: reply,
+  ).catchError((_) {});
+}
+
+class _BannersTab extends StatefulWidget {
+  final FirebaseFirestore db;
+
+  const _BannersTab({required this.db});
+
+  @override
+  State<_BannersTab> createState() => _BannersTabState();
+}
+
+class _BannersTabState extends State<_BannersTab> {
+  bool _loading = false;
+
+  Future<void> _addBanner() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+      maxWidth: 1280,
+      maxHeight: 720,
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (bytes.length > 750 * 1024) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('image_too_large'))),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await widget.db.collection('app_banners').add({
+        'imageBase64': base64Encode(bytes),
+        'isActive': true,
+        'sortOrder': DateTime.now().millisecondsSinceEpoch,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        PrimaryButton(
+          label: context.t('add_banner'),
+          icon: const Icon(Icons.add_photo_alternate_outlined),
+          isLoading: _loading,
+          onPressed: _addBanner,
+        ),
+        const SizedBox(height: 14),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: widget.db
+              .collection('app_banners')
+              .orderBy('sortOrder')
+              .snapshots(),
+          builder: (context, snap) {
+            if (!snap.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snap.data!.docs.isEmpty) {
+              return _EmptyAdminState(
+                icon: Icons.image_outlined,
+                color: AppColors.accent,
+                title: context.t('no_banners'),
+                subtitle: context.t('add_first_banner'),
+              );
+            }
+            return Column(
+              children: snap.data!.docs.map((doc) {
+                final data = doc.data();
+                final image = data['imageBase64'] as String? ?? '';
+                final active = data['isActive'] as bool? ?? true;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface(context),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border(context)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: image.isEmpty
+                            ? Container(color: AppColors.surfaceAlt(context))
+                            : Image.memory(
+                                base64Decode(image),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: AppColors.surfaceAlt(context),
+                                  child:
+                                      const Icon(Icons.broken_image_outlined),
+                                ),
+                              ),
+                      ),
+                      SwitchListTile.adaptive(
+                        value: active,
+                        title: Text(context.t('show_banner')),
+                        onChanged: (value) => doc.reference.update({
+                          'isActive': value,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        }),
+                        secondary: IconButton(
+                          tooltip: context.t('delete'),
+                          icon: const Icon(Icons.delete_outline_rounded),
+                          onPressed: () => doc.reference.delete(),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
 }
 
 class _MiniMeta extends StatelessWidget {
