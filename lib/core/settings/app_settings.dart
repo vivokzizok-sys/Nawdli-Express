@@ -12,7 +12,6 @@ class NotificationSoundOption {
 
 class AppSettingsController extends ChangeNotifier {
   static const _themeKey = 'theme_mode';
-  static const _languageKey = 'language_code';
   static const _notificationSoundKey = 'notification_sound';
 
   static const notificationSounds = <NotificationSoundOption>[
@@ -32,23 +31,20 @@ class AppSettingsController extends ChangeNotifier {
   ];
 
   ThemeMode _themeMode = ThemeMode.light;
-  AppLanguage _language = AppLanguage.en;
+  final AppLanguage _language = AppLanguage.ar;
   String _notificationSound = 'message_sound';
 
   ThemeMode get themeMode => _themeMode;
   AppLanguage get language => _language;
   String get notificationSound => _notificationSound;
-  Locale get locale => Locale(_language == AppLanguage.ar ? 'ar' : 'en');
-  TextDirection get textDirection =>
-      _language == AppLanguage.ar ? TextDirection.rtl : TextDirection.ltr;
+  Locale get locale => const Locale('ar');
+  TextDirection get textDirection => TextDirection.rtl;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTheme = prefs.getString(_themeKey);
-    final savedLanguage = prefs.getString(_languageKey);
     final savedSound = prefs.getString(_notificationSoundKey);
     _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
-    _language = savedLanguage == 'ar' ? AppLanguage.ar : AppLanguage.en;
     if (notificationSounds.any((sound) => sound.key == savedSound)) {
       _notificationSound = savedSound!;
     }
@@ -60,16 +56,6 @@ class AppSettingsController extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, mode == ThemeMode.dark ? 'dark' : 'light');
-  }
-
-  Future<void> setLanguage(AppLanguage language) async {
-    _language = language;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _languageKey,
-      language == AppLanguage.ar ? 'ar' : 'en',
-    );
   }
 
   Future<void> setNotificationSound(String soundKey) async {
@@ -344,7 +330,6 @@ class AppStrings {
     'order_notes': 'Order notes',
     'restaurant_products': 'Restaurant products',
     'upload_product_photo': 'Upload product photo',
-    'stock': 'Stock',
     'quantity': 'Quantity',
     'order_now': 'Order',
     'delivery_fee': 'Delivery fee',
@@ -692,7 +677,6 @@ class AppStrings {
     'restaurant_dashboard': 'لوحة المطعم',
     'restaurant_products': 'منتجات المطاعم',
     'upload_product_photo': 'رفع صورة المنتج',
-    'stock': 'المخزون',
     'quantity': 'الكمية',
     'order_now': 'طلب',
     'delivery_fee': 'سعر التوصيل',

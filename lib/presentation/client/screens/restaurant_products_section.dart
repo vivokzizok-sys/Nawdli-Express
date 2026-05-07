@@ -25,16 +25,17 @@ class RestaurantProductsSection extends StatelessWidget {
           .limit(50)
           .snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData) {
-          return const SizedBox(
-            height: 140,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        if (snap.hasError) {
+          return EmptyState(
+            icon: Icons.error_outline_rounded,
+            title: context.t('no_menu_items'),
+            subtitle: context.t('store_menu_empty'),
           );
         }
-        final products = snap.data!.docs.where((doc) {
-          final stock = (doc.data()['stock'] as num?)?.toInt() ?? 0;
-          return stock > 0;
-        }).toList();
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+        final products = snap.data!.docs;
         if (products.isEmpty) {
           return EmptyState(
             icon: Icons.restaurant_menu_outlined,
@@ -42,27 +43,16 @@ class RestaurantProductsSection extends StatelessWidget {
             subtitle: context.t('store_menu_empty'),
           );
         }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text(
-                context.t('restaurant_products'),
-                style: AppTextStyles.title3,
-              ),
-            ),
-            SizedBox(
-              height: 236,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: products.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (_, index) => _ProductCard(doc: products[index]),
-              ),
-            ),
-          ],
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.72,
+          ),
+          itemCount: products.length,
+          itemBuilder: (_, index) => _ProductCard(doc: products[index]),
         );
       },
     );
@@ -79,89 +69,73 @@ class _ProductCard extends StatelessWidget {
     final data = doc.data();
     final image = data['imageBase64'] as String?;
     final price = (data['price'] as num?)?.toDouble() ?? 0;
-    final stock = (data['stock'] as num?)?.toInt() ?? 0;
     final name = data['name'] as String? ?? '';
     final restaurant = data['storeName'] as String? ?? context.t('restaurant');
 
-    return SizedBox(
-      width: 180,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border(context)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 92,
-              width: double.infinity,
-              child: image == null || image.isEmpty
-                  ? Container(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 92,
+            width: double.infinity,
+            child: image == null || image.isEmpty
+                ? Container(
+                    color: AppColors.surfaceAlt(context),
+                    child: const Icon(Icons.fastfood_outlined),
+                  )
+                : Image.memory(
+                    base64Decode(image),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
                       color: AppColors.surfaceAlt(context),
-                      child: const Icon(Icons.fastfood_outlined),
-                    )
-                  : Image.memory(
-                      base64Decode(image),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.surfaceAlt(context),
-                        child: const Icon(Icons.broken_image_outlined),
-                      ),
+                      child: const Icon(Icons.broken_image_outlined),
                     ),
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: AppTextStyles.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  restaurant,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary(context),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${price.toStringAsFixed(0)} DA',
+                  style: AppTextStyles.captionMedium,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => _showRestaurantOrderSheet(context, doc),
+                    child: Text(context.t('order_now')),
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: AppTextStyles.bodyMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    restaurant,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${price.toStringAsFixed(0)} DA',
-                          style: AppTextStyles.captionMedium,
-                        ),
-                      ),
-                      Text(
-                        '${context.t('stock')}: $stock',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => _showRestaurantOrderSheet(context, doc),
-                      child: Text(context.t('order_now')),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -221,7 +195,6 @@ class _RestaurantOrderSheetState extends State<_RestaurantOrderSheet> {
     final data = widget.productDoc.data();
     final name = data['name'] as String? ?? '';
     final price = (data['price'] as num?)?.toDouble() ?? 0;
-    final stock = (data['stock'] as num?)?.toInt() ?? 0;
     final productsTotal = price * _quantity;
     final total = productsTotal + RestaurantProductsSection.deliveryFee;
 
@@ -296,9 +269,7 @@ class _RestaurantOrderSheetState extends State<_RestaurantOrderSheet> {
                       ),
                     ),
                     IconButton(
-                      onPressed: _quantity < stock
-                          ? () => setState(() => _quantity++)
-                          : null,
+                      onPressed: () => setState(() => _quantity++),
                       icon: const Icon(Icons.add_circle_outline_rounded),
                     ),
                   ],
@@ -360,54 +331,42 @@ class _RestaurantOrderSheetState extends State<_RestaurantOrderSheet> {
           product['storeId'] as String? ?? productRef.parent.parent?.id;
       if (storeId == null) return;
 
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        final fresh = await tx.get(productRef);
-        final currentStock = (fresh.data()?['stock'] as num?)?.toInt() ?? 0;
-        if (currentStock < _quantity) {
-          throw FirebaseException(
-            plugin: 'firestore',
-            message: 'Not enough stock',
-          );
-        }
-        tx.update(productRef, {
-          'stock': currentStock - _quantity,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        tx.set(orderRef, {
-          'clientId': user.uid,
-          'clientName': _name.text.trim(),
-          'clientPhone': _phone.text.trim(),
-          'description': product['name'] as String? ?? '',
-          'pickupLocation': const GeoPoint(0, 0),
-          'pickupAddress': product['storeAddress'] as String? ?? '',
-          'dropoffLocation': const GeoPoint(0, 0),
-          'dropoffAddress': _address.text.trim(),
-          'status': 'storePending',
-          'sourceType': 'store',
-          'storeId': storeId,
-          'storeName': product['storeName'],
-          'storePhone': product['storePhone'],
-          'storeItemName': product['name'],
-          'storeItemPrice': price,
-          'quantity': _quantity,
-          'deliveryFee': RestaurantProductsSection.deliveryFee,
-          'productsTotal': productsTotal,
-          'totalAmount': total,
-          'bidCount': 0,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        tx.set(notificationRef, {
-          'userId': storeId,
-          'orderId': orderRef.id,
-          'type': 'store_order',
-          'title': 'New restaurant order',
-          'body': '${_name.text.trim()} ordered ${product['name']}',
-          'createdBy': user.uid,
-          'read': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+      final batch = FirebaseFirestore.instance.batch();
+      batch.set(orderRef, {
+        'clientId': user.uid,
+        'clientName': _name.text.trim(),
+        'clientPhone': _phone.text.trim(),
+        'description': product['name'] as String? ?? '',
+        'pickupLocation': const GeoPoint(0, 0),
+        'pickupAddress': product['storeAddress'] as String? ?? '',
+        'dropoffLocation': const GeoPoint(0, 0),
+        'dropoffAddress': _address.text.trim(),
+        'status': 'storePending',
+        'sourceType': 'store',
+        'storeId': storeId,
+        'storeName': product['storeName'],
+        'storePhone': product['storePhone'],
+        'storeItemName': product['name'],
+        'storeItemPrice': price,
+        'quantity': _quantity,
+        'deliveryFee': RestaurantProductsSection.deliveryFee,
+        'productsTotal': productsTotal,
+        'totalAmount': total,
+        'bidCount': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
+      batch.set(notificationRef, {
+        'userId': storeId,
+        'orderId': orderRef.id,
+        'type': 'store_order',
+        'title': 'New restaurant order',
+        'body': '${_name.text.trim()} ordered ${product['name']}',
+        'createdBy': user.uid,
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
 
       if (!mounted) return;
       Navigator.pop(context);

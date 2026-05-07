@@ -41,7 +41,6 @@ class _StoreOrderScreenState extends State<StoreOrderScreen> {
   Widget build(BuildContext context) {
     final itemName = widget.item['name'] as String? ?? '';
     final itemPrice = (widget.item['price'] as num?)?.toDouble() ?? 0;
-    final stock = (widget.item['stock'] as num?)?.toInt() ?? 1;
     final productsTotal = itemPrice * _quantity;
     const deliveryFee = 100.0;
     final total = productsTotal + deliveryFee;
@@ -119,9 +118,7 @@ class _StoreOrderScreenState extends State<StoreOrderScreen> {
                     ),
                     Text('$_quantity', style: AppTextStyles.bodyMedium),
                     IconButton(
-                      onPressed: _quantity < stock
-                          ? () => setState(() => _quantity++)
-                          : null,
+                      onPressed: () => setState(() => _quantity++),
                       icon: const Icon(Icons.add_circle_outline_rounded),
                     ),
                   ],

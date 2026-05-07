@@ -144,10 +144,7 @@ class _VeloceExpressAppState extends State<VeloceExpressApp> {
               darkTheme: AppTheme.dark,
               themeMode: _settingsController.themeMode,
               locale: _settingsController.locale,
-              supportedLocales: const [
-                Locale('en'),
-                Locale('ar'),
-              ],
+              supportedLocales: const [Locale('ar')],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,

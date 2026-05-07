@@ -145,21 +145,18 @@ class _PublicMenu extends StatelessWidget {
           children: docs.map((doc) {
             final data = doc.data();
             final price = (data['price'] as num?)?.toDouble() ?? 0;
-            final stock = (data['stock'] as num?)?.toInt() ?? 0;
             final image = data['imageBase64'] as String?;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                onTap: stock <= 0
-                    ? null
-                    : () => context.push(
-                          '/client/store-order',
-                          extra: {
-                            'store': store,
-                            'itemId': doc.id,
-                            'item': data,
-                          },
-                        ),
+                onTap: () => context.push(
+                  '/client/store-order',
+                  extra: {
+                    'store': store,
+                    'itemId': doc.id,
+                    'item': data,
+                  },
+                ),
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   padding: const EdgeInsets.all(14),
@@ -208,14 +205,6 @@ class _PublicMenu extends StatelessWidget {
                                   color: AppColors.textSecondary(context),
                                 ),
                               ),
-                            Text(
-                              '${context.t('stock')}: $stock',
-                              style: AppTextStyles.caption.copyWith(
-                                color: stock > 0
-                                    ? AppColors.textSecondary(context)
-                                    : AppColors.error,
-                              ),
-                            ),
                           ],
                         ),
                       ),

@@ -90,37 +90,6 @@ class SettingsScreen extends StatelessWidget {
                 ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(context.t('language'),
-                        style: AppTextStyles.captionMedium.copyWith(
-                          color: AppColors.textSecondary(context),
-                        )),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<AppLanguage>(
-                        segments: [
-                          ButtonSegment(
-                            value: AppLanguage.en,
-                            label: Text(context.t('english')),
-                          ),
-                          ButtonSegment(
-                            value: AppLanguage.ar,
-                            label: Text(context.t('arabic')),
-                          ),
-                        ],
-                        selected: {settings.language},
-                        onSelectionChanged: (set) =>
-                            settings.setLanguage(set.first),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
                 child: DropdownButtonFormField<String>(
                   value: settings.notificationSound,
                   dropdownColor: AppColors.surface(context),

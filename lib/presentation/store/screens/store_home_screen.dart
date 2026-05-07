@@ -79,7 +79,6 @@ class _MenuItemSheet extends StatefulWidget {
 class _MenuItemSheetState extends State<_MenuItemSheet> {
   final _name = TextEditingController();
   final _price = TextEditingController();
-  final _stock = TextEditingController(text: '1');
   final _description = TextEditingController();
   String? _imageBase64;
   bool _loading = false;
@@ -88,7 +87,6 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
   void dispose() {
     _name.dispose();
     _price.dispose();
-    _stock.dispose();
     _description.dispose();
     super.dispose();
   }
@@ -114,12 +112,9 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
 
   Future<void> _save() async {
     final parsedPrice = double.tryParse(_price.text.trim());
-    final parsedStock = int.tryParse(_stock.text.trim());
     if (_name.text.trim().isEmpty ||
         parsedPrice == null ||
         parsedPrice <= 0 ||
-        parsedStock == null ||
-        parsedStock < 0 ||
         _imageBase64 == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.t('field_required'))),
@@ -135,10 +130,9 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
           .add({
         'name': _name.text.trim(),
         'price': parsedPrice,
-        'stock': parsedStock,
         'description': _description.text.trim(),
         'imageBase64': _imageBase64,
-        'isAvailable': parsedStock > 0,
+        'isAvailable': true,
         'storeId': widget.store.uid,
         'storeName': widget.store.fullName,
         'storePhone': widget.store.phoneNumber,
@@ -206,12 +200,6 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
                   decimal: true,
                 ),
                 prefixIcon: const Center(widthFactor: 1.4, child: Text('DA')),
-              ),
-              const SizedBox(height: 10),
-              AppTextField(
-                controller: _stock,
-                hint: context.t('stock'),
-                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 10),
               AppTextField(
@@ -302,7 +290,6 @@ class _MenuItemsList extends StatelessWidget {
           children: snap.data!.docs.map((doc) {
             final data = doc.data();
             final price = (data['price'] as num?)?.toDouble() ?? 0;
-            final stock = (data['stock'] as num?)?.toInt() ?? 0;
             final image = data['imageBase64'] as String?;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -352,14 +339,6 @@ class _MenuItemsList extends StatelessWidget {
                                 color: AppColors.textSecondary(context),
                               ),
                             ),
-                          Text(
-                            '${context.t('stock')}: $stock',
-                            style: AppTextStyles.caption.copyWith(
-                              color: stock > 0
-                                  ? AppColors.textSecondary(context)
-                                  : AppColors.error,
-                            ),
-                          ),
                         ],
                       ),
                     ),

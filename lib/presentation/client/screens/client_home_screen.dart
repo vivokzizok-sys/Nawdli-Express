@@ -23,13 +23,7 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final Set<String> _selectedOrderIds = {};
-
-  @override
-  void initState() {
-    super.initState();
-    final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-    context.read<OrderBloc>().add(OrderWatchClientOrders(user.uid));
-  }
+  bool _showOrders = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,34 +31,57 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.page(context),
       appBar: AppBar(
+        leading: _showOrders
+            ? IconButton(
+                tooltip: context.t('back'),
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => setState(() {
+                  _showOrders = false;
+                  _selectedOrderIds.clear();
+                }),
+              )
+            : null,
         title: Text(
-          _selectedOrderIds.isEmpty
-              ? context.t('my_orders')
-              : '${_selectedOrderIds.length}',
+          !_showOrders
+              ? context.t('restaurant_products')
+              : _selectedOrderIds.isEmpty
+                  ? context.t('my_orders')
+                  : '${_selectedOrderIds.length}',
         ),
         actions: [
-          if (_selectedOrderIds.isNotEmpty) ...[
+          if (_showOrders) ...[
+            if (_selectedOrderIds.isNotEmpty) ...[
+              IconButton(
+                tooltip: context.t('delete_selected'),
+                icon: const Icon(Icons.delete_outline_rounded),
+                onPressed: () => _hideSelectedOrders(user.uid),
+              ),
+              IconButton(
+                tooltip: context.t('cancel'),
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => setState(_selectedOrderIds.clear),
+              ),
+            ],
+          ] else ...[
             IconButton(
-              tooltip: context.t('delete_selected'),
-              icon: const Icon(Icons.delete_outline_rounded),
-              onPressed: () => _hideSelectedOrders(user.uid),
+              tooltip: context.t('my_orders'),
+              icon: const Icon(Icons.receipt_long_outlined),
+              onPressed: () {
+                context.read<OrderBloc>().add(OrderWatchClientOrders(user.uid));
+                setState(() => _showOrders = true);
+              },
             ),
             IconButton(
-              tooltip: context.t('cancel'),
-              icon: const Icon(Icons.close_rounded),
-              onPressed: () => setState(_selectedOrderIds.clear),
+              tooltip: context.t('stores'),
+              icon: const Icon(Icons.storefront_outlined),
+              onPressed: () => context.push('/client/stores'),
+            ),
+            IconButton(
+              tooltip: context.t('open_dashboard'),
+              icon: const Icon(Icons.insights_rounded),
+              onPressed: () => context.push('/client/dashboard'),
             ),
           ],
-          IconButton(
-            tooltip: context.t('stores'),
-            icon: const Icon(Icons.storefront_outlined),
-            onPressed: () => context.push('/client/stores'),
-          ),
-          IconButton(
-            tooltip: context.t('open_dashboard'),
-            icon: const Icon(Icons.insights_rounded),
-            onPressed: () => context.push('/client/dashboard'),
-          ),
           AppMenuButton(user: user),
         ],
       ),
@@ -76,83 +93,89 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       body: Column(
         children: [
           _ClientActiveTripBanner(clientId: user.uid),
-          const RestaurantProductsSection(),
           Expanded(
-            child: BlocBuilder<OrderBloc, OrderState>(
-              builder: (context, state) {
-                if (state is OrdersLoaded) {
-                  if (state.orders.isEmpty) {
-                    return EmptyState(
-                      icon: Icons.receipt_long_outlined,
-                      title: context.t('no_orders_yet'),
-                      subtitle: context.t('create_first_order'),
-                    );
-                  }
-                  final deletableIds = state.orders
-                      .where(_canHide)
-                      .map((order) => order.orderId)
-                      .toList();
-                  return Column(
-                    children: [
-                      if (deletableIds.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                          child: Row(
-                            children: [
-                              TextButton.icon(
-                                onPressed: () => setState(() {
-                                  _selectedOrderIds
-                                    ..clear()
-                                    ..addAll(deletableIds);
-                                }),
-                                icon: const Icon(Icons.select_all_rounded),
-                                label: Text(context.t('select_all')),
-                              ),
-                              const Spacer(),
-                              if (_selectedOrderIds.isNotEmpty)
-                                TextButton.icon(
-                                  onPressed: () =>
-                                      _hideSelectedOrders(user.uid),
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                  ),
-                                  label: Text(context.t('delete_selected')),
+            child: _showOrders
+                ? BlocBuilder<OrderBloc, OrderState>(
+                    builder: (context, state) {
+                      if (state is OrdersLoaded) {
+                        if (state.orders.isEmpty) {
+                          return EmptyState(
+                            icon: Icons.receipt_long_outlined,
+                            title: context.t('no_orders_yet'),
+                            subtitle: context.t('create_first_order'),
+                          );
+                        }
+                        final deletableIds = state.orders
+                            .where(_canHide)
+                            .map((order) => order.orderId)
+                            .toList();
+                        return Column(
+                          children: [
+                            if (deletableIds.isNotEmpty)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                                child: Row(
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: () => setState(() {
+                                        _selectedOrderIds
+                                          ..clear()
+                                          ..addAll(deletableIds);
+                                      }),
+                                      icon:
+                                          const Icon(Icons.select_all_rounded),
+                                      label: Text(context.t('select_all')),
+                                    ),
+                                    const Spacer(),
+                                    if (_selectedOrderIds.isNotEmpty)
+                                      TextButton.icon(
+                                        onPressed: () =>
+                                            _hideSelectedOrders(user.uid),
+                                        icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                        ),
+                                        label:
+                                            Text(context.t('delete_selected')),
+                                      ),
+                                  ],
                                 ),
-                            ],
-                          ),
-                        ),
-                      Expanded(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                          itemCount: state.orders.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (_, index) {
-                            final order = state.orders[index];
-                            return _OrderTile(
-                              order: order,
-                              selected: _selectedOrderIds.contains(
-                                order.orderId,
                               ),
-                              selectionMode: _selectedOrderIds.isNotEmpty,
-                              onSelect: _canHide(order)
-                                  ? () => _toggleSelection(order.orderId)
-                                  : null,
-                              onDelete: _canHide(order)
-                                  ? () => _hideOrder(order.orderId, user.uid)
-                                  : null,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                }
-                return const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                );
-              },
-            ),
+                            Expanded(
+                              child: ListView.separated(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                                itemCount: state.orders.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 10),
+                                itemBuilder: (_, index) {
+                                  final order = state.orders[index];
+                                  return _OrderTile(
+                                    order: order,
+                                    selected: _selectedOrderIds.contains(
+                                      order.orderId,
+                                    ),
+                                    selectionMode: _selectedOrderIds.isNotEmpty,
+                                    onSelect: _canHide(order)
+                                        ? () => _toggleSelection(order.orderId)
+                                        : null,
+                                    onDelete: _canHide(order)
+                                        ? () =>
+                                            _hideOrder(order.orderId, user.uid)
+                                        : null,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
+                    },
+                  )
+                : const RestaurantProductsSection(),
           ),
         ],
       ),
