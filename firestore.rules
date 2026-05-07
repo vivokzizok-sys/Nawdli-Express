@@ -98,6 +98,10 @@ service cloud.firestore {
       }
     }
 
+    match /{path=**}/menu_items/{itemId} {
+      allow read: if isApproved();
+    }
+
     match /orders/{orderId} {
       allow create: if isClient()
         && request.resource.data.clientId == request.auth.uid
