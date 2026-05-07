@@ -72,12 +72,12 @@ class AuthEmailUnverified extends AuthState {
   const AuthEmailUnverified(this.user);
   @override
   List<Object?> get props => [
-    user.uid,
-    user.isEmailVerified,
-    user.fullName,
-    user.phoneNumber,
-    user.profilePhotoBase64,
-  ];
+        user.uid,
+        user.isEmailVerified,
+        user.fullName,
+        user.phoneNumber,
+        user.profilePhotoBase64,
+      ];
 }
 
 class AuthPendingApproval extends AuthState {
@@ -85,12 +85,12 @@ class AuthPendingApproval extends AuthState {
   const AuthPendingApproval(this.user);
   @override
   List<Object?> get props => [
-    user.uid,
-    user.isApproved,
-    user.fullName,
-    user.phoneNumber,
-    user.profilePhotoBase64,
-  ];
+        user.uid,
+        user.isApproved,
+        user.fullName,
+        user.phoneNumber,
+        user.profilePhotoBase64,
+      ];
 }
 
 class AuthAuthenticated extends AuthState {
@@ -98,16 +98,16 @@ class AuthAuthenticated extends AuthState {
   const AuthAuthenticated(this.user);
   @override
   List<Object?> get props => [
-    user.uid,
-    user.role,
-    user.isApproved,
-    user.fullName,
-    user.phoneNumber,
-    user.email,
-    user.profilePhotoBase64,
-    user.rating,
-    user.totalDeliveries,
-  ];
+        user.uid,
+        user.role,
+        user.isApproved,
+        user.fullName,
+        user.phoneNumber,
+        user.email,
+        user.profilePhotoBase64,
+        user.rating,
+        user.totalDeliveries,
+      ];
 }
 
 class AuthFailureState extends AuthState {
@@ -122,8 +122,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Timer? _pollTimer;
 
   AuthBloc({required AuthRepository authRepository})
-    : _repo = authRepository,
-      super(AuthInitial()) {
+      : _repo = authRepository,
+        super(AuthInitial()) {
     on<AuthCheckRequested>(_onCheck);
     on<AuthSignInRequested>(_onSignIn);
     on<AuthSignUpRequested>(_onSignUp);

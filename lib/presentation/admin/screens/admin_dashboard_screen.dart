@@ -187,8 +187,8 @@ class _PendingUserCardState extends State<_PendingUserCard> {
     final roleColor = isDriver
         ? AppColors.driverRole
         : isStore
-        ? AppColors.accent
-        : AppColors.clientRole;
+            ? AppColors.accent
+            : AppColors.clientRole;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -213,8 +213,8 @@ class _PendingUserCardState extends State<_PendingUserCard> {
                     color: isDriver
                         ? AppColors.driverRole.withOpacity(0.1)
                         : isStore
-                        ? AppColors.accent.withOpacity(0.1)
-                        : AppColors.clientRole.withOpacity(0.1),
+                            ? AppColors.accent.withOpacity(0.1)
+                            : AppColors.clientRole.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -350,18 +350,18 @@ class _RoleBadge extends StatelessWidget {
     final color = isDriver
         ? AppColors.driverRole
         : isStore
-        ? AppColors.accent
-        : isAdmin
-        ? AppColors.textPrimary(context)
-        : AppColors.clientRole;
+            ? AppColors.accent
+            : isAdmin
+                ? AppColors.textPrimary(context)
+                : AppColors.clientRole;
     final roleLabel = context.t(
       isDriver
           ? 'driver'
           : isStore
-          ? 'store'
-          : isAdmin
-          ? 'admin'
-          : 'client',
+              ? 'store'
+              : isAdmin
+                  ? 'admin'
+                  : 'client',
     );
     final vehicleLabel = vehicleType == null ? null : context.t(vehicleType!);
     final label = isDriver
@@ -411,6 +411,7 @@ class _OrdersTabState extends State<_OrdersTab> {
   Widget build(BuildContext context) {
     final filters = {
       'all': context.t('all'),
+      'storePending': context.statusText('storePending'),
       'requested': context.statusText('requested'),
       'priced': context.statusText('priced'),
       'open': context.statusText('open'),
@@ -612,17 +613,18 @@ class _AdminOrderRow extends StatelessWidget {
   }
 
   Color _statusColor(String s) => switch (s) {
-    'requested' => AppColors.info,
-    'priced' => AppColors.warning,
-    'rejected' => AppColors.error,
-    'open' => AppColors.info,
-    'bidding' => AppColors.warning,
-    'accepted' => AppColors.accent,
-    'inProgress' => AppColors.success,
-    'delivered' => AppColors.grey400,
-    'cancelled' => AppColors.error,
-    _ => AppColors.grey400,
-  };
+        'storePending' => AppColors.warning,
+        'requested' => AppColors.info,
+        'priced' => AppColors.warning,
+        'rejected' => AppColors.error,
+        'open' => AppColors.info,
+        'bidding' => AppColors.warning,
+        'accepted' => AppColors.accent,
+        'inProgress' => AppColors.success,
+        'delivered' => AppColors.grey400,
+        'cancelled' => AppColors.error,
+        _ => AppColors.grey400,
+      };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -644,13 +646,13 @@ class _UsersTabState extends State<_UsersTab> {
   Widget build(BuildContext context) {
     Query query = _roleFilter == 'all'
         ? widget.db
-              .collection('users')
-              .orderBy('createdAt', descending: true)
-              .limit(150)
+            .collection('users')
+            .orderBy('createdAt', descending: true)
+            .limit(150)
         : widget.db
-              .collection('users')
-              .where('role', isEqualTo: _roleFilter)
-              .limit(150);
+            .collection('users')
+            .where('role', isEqualTo: _roleFilter)
+            .limit(150);
 
     return Column(
       children: [
@@ -759,10 +761,10 @@ class _UserRow extends StatelessWidget {
     final roleColor = role == 'driver'
         ? AppColors.driverRole
         : role == 'store'
-        ? AppColors.accent
-        : role == 'admin'
-        ? AppColors.adminRole
-        : AppColors.clientRole;
+            ? AppColors.accent
+            : role == 'admin'
+                ? AppColors.adminRole
+                : AppColors.clientRole;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -779,8 +781,8 @@ class _UserRow extends StatelessWidget {
             backgroundColor: roleColor.withOpacity(0.1),
             backgroundImage:
                 profilePhotoBase64 == null || profilePhotoBase64.isEmpty
-                ? null
-                : MemoryImage(base64Decode(profilePhotoBase64)),
+                    ? null
+                    : MemoryImage(base64Decode(profilePhotoBase64)),
             child: profilePhotoBase64 != null && profilePhotoBase64.isNotEmpty
                 ? null
                 : Text(
@@ -858,9 +860,8 @@ class _UserRow extends StatelessWidget {
                             ? context.t('approved')
                             : context.t('blocked'),
                         style: AppTextStyles.caption.copyWith(
-                          color: isApproved
-                              ? AppColors.success
-                              : AppColors.error,
+                          color:
+                              isApproved ? AppColors.success : AppColors.error,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -945,11 +946,11 @@ class _DriverCommentsSheet extends StatelessWidget {
                       data: doc.data(),
                       onDelete: () =>
                           db.collection('orders').doc(doc.id).update({
-                            'clientRatingComment': null,
-                            'commentDeletedByAdmin': true,
-                            'commentDeletedAt': FieldValue.serverTimestamp(),
-                            'updatedAt': FieldValue.serverTimestamp(),
-                          }),
+                        'clientRatingComment': null,
+                        'commentDeletedByAdmin': true,
+                        'commentDeletedAt': FieldValue.serverTimestamp(),
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      }),
                     ),
               ],
             );
@@ -1123,9 +1124,8 @@ class _TicketCard extends StatelessWidget {
                 ),
               ),
               StatusChip(
-                label: isOpen
-                    ? context.statusText('open')
-                    : context.t('closed'),
+                label:
+                    isOpen ? context.statusText('open') : context.t('closed'),
                 color: isOpen ? AppColors.warning : AppColors.success,
               ),
             ],
@@ -1194,21 +1194,21 @@ class _TicketCard extends StatelessWidget {
                   onPressed: createdBy == null
                       ? null
                       : () => _replyToTicket(
-                          context,
-                          db,
-                          ticketId: ticketId,
-                          userId: createdBy,
-                        ),
+                            context,
+                            db,
+                            ticketId: ticketId,
+                            userId: createdBy,
+                          ),
                   icon: const Icon(Icons.reply_rounded),
                   label: Text(context.t('reply')),
                 ),
                 TextButton.icon(
                   onPressed: () =>
                       db.collection('support_tickets').doc(ticketId).update({
-                        'status': 'closed',
-                        'closedAt': FieldValue.serverTimestamp(),
-                        'updatedAt': FieldValue.serverTimestamp(),
-                      }),
+                    'status': 'closed',
+                    'closedAt': FieldValue.serverTimestamp(),
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  }),
                   icon: const Icon(Icons.check_circle_outline_rounded),
                   label: Text(context.t('close_ticket')),
                 ),

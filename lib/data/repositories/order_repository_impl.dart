@@ -23,9 +23,11 @@ class OrderRepositoryImpl implements OrderRepository {
           : _db.collection('orders').doc(order.orderId);
       final model = OrderModel.fromEntity(
         order.copyWith(
-          status: order.driverId == null
-              ? OrderStatus.open
-              : OrderStatus.requested,
+          status: order.sourceType == 'store'
+              ? order.status
+              : order.driverId == null
+                  ? OrderStatus.open
+                  : OrderStatus.requested,
         ),
       );
       await ref.set({
@@ -50,7 +52,7 @@ class OrderRepositoryImpl implements OrderRepository {
           'userId': order.storeId,
           'orderId': ref.id,
           'type': 'store_order',
-          'title': 'New store order',
+          'title': 'New restaurant order',
           'body':
               '${order.clientName} ordered ${order.storeItemName ?? order.description}.',
           'createdBy': order.clientId,
@@ -76,11 +78,9 @@ class OrderRepositoryImpl implements OrderRepository {
         .snapshots()
         .map(
           (snap) => snap.docs.map(OrderModel.fromFirestore).where((order) {
-            final hiddenBy =
-                snap.docs
-                        .firstWhere((doc) => doc.id == order.orderId)
-                        .data()['hiddenByClientIds']
-                    as List<dynamic>? ??
+            final hiddenBy = snap.docs
+                    .firstWhere((doc) => doc.id == order.orderId)
+                    .data()['hiddenByClientIds'] as List<dynamic>? ??
                 const [];
             return !hiddenBy.contains(clientId);
           }).toList(),
@@ -107,6 +107,7 @@ class OrderRepositoryImpl implements OrderRepository {
           'status',
           whereIn: [
             'requested',
+            'storePending',
             'priced',
             'accepted',
             'inProgress',
@@ -335,9 +336,9 @@ class OrderRepositoryImpl implements OrderRepository {
           .collection('bids')
           .doc(bidId)
           .update({
-            'status': 'rejected',
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'status': 'rejected',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left(NetworkFailure(e.message ?? 'Failed to reject bid'));

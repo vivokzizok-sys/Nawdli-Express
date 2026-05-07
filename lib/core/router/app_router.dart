@@ -313,11 +313,11 @@ class AppRouter {
   }
 
   static String _homeForRole(UserRole role) => switch (role) {
-    UserRole.client => AppRoutes.clientHome,
-    UserRole.driver => AppRoutes.driverHome,
-    UserRole.store => AppRoutes.storeHome,
-    UserRole.admin => AppRoutes.adminDashboard,
-  };
+        UserRole.client => AppRoutes.clientHome,
+        UserRole.driver => AppRoutes.driverHome,
+        UserRole.store => AppRoutes.storeHome,
+        UserRole.admin => AppRoutes.adminDashboard,
+      };
 
   static CustomTransitionPage _fade(GoRouterState state, Widget child) {
     return CustomTransitionPage(

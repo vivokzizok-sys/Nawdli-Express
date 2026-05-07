@@ -12,6 +12,7 @@ import '../../auth/bloc/auth_bloc.dart';
 import '../../order/bloc/order_bloc.dart';
 import '../../shared/widgets/app_menu_button.dart';
 import '../../shared/widgets/shared_widgets.dart';
+import 'restaurant_products_section.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -75,6 +76,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       body: Column(
         children: [
           _ClientActiveTripBanner(clientId: user.uid),
+          const RestaurantProductsSection(),
           Expanded(
             child: BlocBuilder<OrderBloc, OrderState>(
               builder: (context, state) {
@@ -224,8 +226,8 @@ class _ClientActiveTripBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             onTap: () async {
               final driver = await context.read<OrderBloc>().getUser(
-                order.driverId!,
-              );
+                    order.driverId!,
+                  );
               if (driver == null || !context.mounted) return;
               context.go(
                 '/active-trip',
@@ -360,14 +362,15 @@ class _OrderTile extends StatelessWidget {
   }
 
   Color _statusColor(OrderStatus status) => switch (status) {
-    OrderStatus.requested => AppColors.info,
-    OrderStatus.priced => AppColors.warning,
-    OrderStatus.rejected => AppColors.error,
-    OrderStatus.open => AppColors.info,
-    OrderStatus.bidding => AppColors.warning,
-    OrderStatus.accepted => AppColors.accent,
-    OrderStatus.inProgress => AppColors.success,
-    OrderStatus.delivered => AppColors.grey400,
-    OrderStatus.cancelled => AppColors.error,
-  };
+        OrderStatus.storePending => AppColors.warning,
+        OrderStatus.requested => AppColors.info,
+        OrderStatus.priced => AppColors.warning,
+        OrderStatus.rejected => AppColors.error,
+        OrderStatus.open => AppColors.info,
+        OrderStatus.bidding => AppColors.warning,
+        OrderStatus.accepted => AppColors.accent,
+        OrderStatus.inProgress => AppColors.success,
+        OrderStatus.delivered => AppColors.grey400,
+        OrderStatus.cancelled => AppColors.error,
+      };
 }

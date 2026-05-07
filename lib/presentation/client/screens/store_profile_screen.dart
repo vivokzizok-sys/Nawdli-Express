@@ -145,13 +145,21 @@ class _PublicMenu extends StatelessWidget {
           children: docs.map((doc) {
             final data = doc.data();
             final price = (data['price'] as num?)?.toDouble() ?? 0;
+            final stock = (data['stock'] as num?)?.toInt() ?? 0;
+            final image = data['imageBase64'] as String?;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                onTap: () => context.push(
-                  '/client/store-order',
-                  extra: {'store': store, 'itemId': doc.id, 'item': data},
-                ),
+                onTap: stock <= 0
+                    ? null
+                    : () => context.push(
+                          '/client/store-order',
+                          extra: {
+                            'store': store,
+                            'itemId': doc.id,
+                            'item': data,
+                          },
+                        ),
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   padding: const EdgeInsets.all(14),
@@ -162,7 +170,27 @@ class _PublicMenu extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.fastfood_outlined),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: SizedBox(
+                          width: 54,
+                          height: 54,
+                          child: image == null || image.isEmpty
+                              ? Container(
+                                  color: AppColors.surfaceAlt(context),
+                                  child: const Icon(Icons.fastfood_outlined),
+                                )
+                              : Image.memory(
+                                  base64Decode(image),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: AppColors.surfaceAlt(context),
+                                    child:
+                                        const Icon(Icons.broken_image_outlined),
+                                  ),
+                                ),
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -180,6 +208,14 @@ class _PublicMenu extends StatelessWidget {
                                   color: AppColors.textSecondary(context),
                                 ),
                               ),
+                            Text(
+                              '${context.t('stock')}: $stock',
+                              style: AppTextStyles.caption.copyWith(
+                                color: stock > 0
+                                    ? AppColors.textSecondary(context)
+                                    : AppColors.error,
+                              ),
+                            ),
                           ],
                         ),
                       ),

@@ -35,8 +35,8 @@ class PendingApprovalScreen extends StatelessWidget {
                 user.role == UserRole.driver
                     ? context.t('driver_approval_body')
                     : user.role == UserRole.store
-                    ? context.t('store_approval_body')
-                    : context.t('client_approval_body'),
+                        ? context.t('store_approval_body')
+                        : context.t('client_approval_body'),
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary(context),
                 ),

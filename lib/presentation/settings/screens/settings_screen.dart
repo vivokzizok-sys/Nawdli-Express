@@ -60,6 +60,34 @@ class SettingsScreen extends StatelessWidget {
                   value ? ThemeMode.dark : ThemeMode.light,
                 ),
               ),
+              if (user.role == UserRole.driver)
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .snapshots(),
+                  builder: (context, snap) {
+                    final available =
+                        snap.data?.data()?['isAvailable'] as bool? ?? true;
+                    return SwitchListTile.adaptive(
+                      secondary: const Icon(Icons.work_outline_rounded),
+                      title: Text(context.t('driver_availability')),
+                      subtitle: Text(
+                        available
+                            ? context.t('available')
+                            : context.t('unavailable'),
+                      ),
+                      value: available,
+                      onChanged: (value) => FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user.uid)
+                          .update({
+                        'isAvailable': value,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      }),
+                    );
+                  },
+                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
                 child: Column(
@@ -170,9 +198,11 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final roleColor = user.role == UserRole.driver
         ? AppColors.driverRole
-        : user.role == UserRole.admin
-            ? AppColors.adminRole
-            : AppColors.clientRole;
+        : user.role == UserRole.store
+            ? AppColors.accent
+            : user.role == UserRole.admin
+                ? AppColors.adminRole
+                : AppColors.clientRole;
 
     return Container(
       padding: const EdgeInsets.all(18),

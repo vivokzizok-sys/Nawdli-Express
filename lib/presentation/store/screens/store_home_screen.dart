@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -8,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/order_model.dart';
 import '../../../domain/entities/order_entity.dart';
+import '../../../domain/entities/user_entity.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../shared/widgets/app_menu_button.dart';
 import '../../shared/widgets/shared_widgets.dart';
@@ -21,11 +25,11 @@ class StoreHomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.page(context),
       appBar: AppBar(
-        title: Text(context.t('store_dashboard')),
+        title: Text(context.t('restaurant_dashboard')),
         actions: [AppMenuButton(user: user)],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showMenuItemSheet(context, user.uid),
+        onPressed: () => _showMenuItemSheet(context, user),
         icon: const Icon(Icons.add_rounded),
         label: Text(context.t('add_menu_item')),
       ),
@@ -46,30 +50,157 @@ class StoreHomeScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showMenuItemSheet(BuildContext context, String storeId) async {
-    final name = TextEditingController();
-    final price = TextEditingController();
-    final description = TextEditingController();
+  Future<void> _showMenuItemSheet(
+      BuildContext context, UserEntity store) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface(context),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 18,
-            right: 18,
-            top: 18,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 18,
-          ),
+        return AppSettingsScope(
+          controller: context.settings,
+          child: _MenuItemSheet(store: store),
+        );
+      },
+    );
+  }
+}
+
+class _MenuItemSheet extends StatefulWidget {
+  final UserEntity store;
+
+  const _MenuItemSheet({required this.store});
+
+  @override
+  State<_MenuItemSheet> createState() => _MenuItemSheetState();
+}
+
+class _MenuItemSheetState extends State<_MenuItemSheet> {
+  final _name = TextEditingController();
+  final _price = TextEditingController();
+  final _stock = TextEditingController(text: '1');
+  final _description = TextEditingController();
+  String? _imageBase64;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _price.dispose();
+    _stock.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 55,
+      maxWidth: 900,
+      maxHeight: 900,
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (bytes.length > 650 * 1024) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('image_too_large'))),
+      );
+      return;
+    }
+    setState(() => _imageBase64 = base64Encode(bytes));
+  }
+
+  Future<void> _save() async {
+    final parsedPrice = double.tryParse(_price.text.trim());
+    final parsedStock = int.tryParse(_stock.text.trim());
+    if (_name.text.trim().isEmpty ||
+        parsedPrice == null ||
+        parsedPrice <= 0 ||
+        parsedStock == null ||
+        parsedStock < 0 ||
+        _imageBase64 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('field_required'))),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.store.uid)
+          .collection('menu_items')
+          .add({
+        'name': _name.text.trim(),
+        'price': parsedPrice,
+        'stock': parsedStock,
+        'description': _description.text.trim(),
+        'imageBase64': _imageBase64,
+        'isAvailable': parsedStock > 0,
+        'storeId': widget.store.uid,
+        'storeName': widget.store.fullName,
+        'storePhone': widget.store.phoneNumber,
+        'storeAddress': widget.store.storeAddress,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 18,
+          right: 18,
+          bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
+        ),
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(context.t('add_menu_item'), style: AppTextStyles.title3),
               const SizedBox(height: 12),
-              AppTextField(controller: name, hint: context.t('item_name')),
+              InkWell(
+                onTap: _pickImage,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  height: 140,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceAlt(context),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border(context)),
+                  ),
+                  child: _imageBase64 == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add_photo_alternate_outlined),
+                            const SizedBox(height: 8),
+                            Text(context.t('upload_product_photo')),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.memory(
+                            base64Decode(_imageBase64!),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AppTextField(controller: _name, hint: context.t('item_name')),
               const SizedBox(height: 10),
               AppTextField(
-                controller: price,
+                controller: _price,
                 hint: context.t('item_price'),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -78,43 +209,27 @@ class StoreHomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               AppTextField(
-                controller: description,
+                controller: _stock,
+                hint: context.t('stock'),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: _description,
                 hint: context.t('description'),
                 maxLines: 2,
               ),
               const SizedBox(height: 14),
               PrimaryButton(
                 label: context.t('save_changes'),
-                onPressed: () async {
-                  final parsedPrice = double.tryParse(price.text.trim());
-                  if (name.text.trim().isEmpty ||
-                      parsedPrice == null ||
-                      parsedPrice <= 0) {
-                    return;
-                  }
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(storeId)
-                      .collection('menu_items')
-                      .add({
-                    'name': name.text.trim(),
-                    'price': parsedPrice,
-                    'description': description.text.trim(),
-                    'isAvailable': true,
-                    'createdAt': FieldValue.serverTimestamp(),
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  });
-                  if (context.mounted) Navigator.pop(context);
-                },
+                isLoading: _loading,
+                onPressed: _save,
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
-    name.dispose();
-    price.dispose();
-    description.dispose();
   }
 }
 
@@ -187,6 +302,8 @@ class _MenuItemsList extends StatelessWidget {
           children: snap.data!.docs.map((doc) {
             final data = doc.data();
             final price = (data['price'] as num?)?.toDouble() ?? 0;
+            final stock = (data['stock'] as num?)?.toInt() ?? 0;
+            final image = data['imageBase64'] as String?;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Container(
@@ -198,7 +315,27 @@ class _MenuItemsList extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.fastfood_outlined),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: image == null || image.isEmpty
+                            ? Container(
+                                color: AppColors.surfaceAlt(context),
+                                child: const Icon(Icons.fastfood_outlined),
+                              )
+                            : Image.memory(
+                                base64Decode(image),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: AppColors.surfaceAlt(context),
+                                  child:
+                                      const Icon(Icons.broken_image_outlined),
+                                ),
+                              ),
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -215,6 +352,14 @@ class _MenuItemsList extends StatelessWidget {
                                 color: AppColors.textSecondary(context),
                               ),
                             ),
+                          Text(
+                            '${context.t('stock')}: $stock',
+                            style: AppTextStyles.caption.copyWith(
+                              color: stock > 0
+                                  ? AppColors.textSecondary(context)
+                                  : AppColors.error,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -311,7 +456,21 @@ class _StoreOrderTile extends StatelessWidget {
           const SizedBox(height: 8),
           Text('${context.t('client')}: ${order.clientName}'),
           Text('${context.t('phone')}: ${order.clientPhone}'),
+          if (order.quantity > 0)
+            Text('${context.t('quantity')}: ${order.quantity}'),
+          if (order.totalAmount != null)
+            Text(
+              '${context.t('total')}: ${order.totalAmount!.toStringAsFixed(0)} DA',
+            ),
           Text('${context.t('delivery_address')}: ${order.dropoffAddress}'),
+          if (order.status == OrderStatus.storePending) ...[
+            const SizedBox(height: 12),
+            PrimaryButton(
+              label: context.t('choose_driver'),
+              icon: const Icon(Icons.local_shipping_outlined),
+              onPressed: () => _showDriverSelection(context, order),
+            ),
+          ],
           if (order.driverId != null) ...[
             const SizedBox(height: 10),
             FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -359,6 +518,7 @@ class _StoreOrderTile extends StatelessWidget {
   }
 
   Color _statusColor(OrderStatus status) => switch (status) {
+        OrderStatus.storePending => AppColors.warning,
         OrderStatus.requested => AppColors.info,
         OrderStatus.priced => AppColors.warning,
         OrderStatus.rejected => AppColors.error,
@@ -369,4 +529,190 @@ class _StoreOrderTile extends StatelessWidget {
         OrderStatus.delivered => AppColors.grey400,
         OrderStatus.cancelled => AppColors.error,
       };
+}
+
+Future<void> _showDriverSelection(
+  BuildContext context,
+  OrderEntity order,
+) async {
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    backgroundColor: AppColors.surface(context),
+    builder: (_) => AppSettingsScope(
+      controller: context.settings,
+      child: _DriverSelectionSheet(order: order),
+    ),
+  );
+}
+
+class _DriverSelectionSheet extends StatelessWidget {
+  final OrderEntity order;
+
+  const _DriverSelectionSheet({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.72,
+        child: FutureBuilder<_DriverAvailabilityData>(
+          future: _loadDrivers(),
+          builder: (context, snap) {
+            if (!snap.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final data = snap.data!;
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              children: [
+                Text(context.t('choose_driver'), style: AppTextStyles.title2),
+                const SizedBox(height: 12),
+                if (data.drivers.isEmpty)
+                  EmptyState(
+                    icon: Icons.local_shipping_outlined,
+                    title: context.t('no_drivers'),
+                    subtitle: context.t('no_drivers_body'),
+                  )
+                else
+                  for (final driver in data.drivers)
+                    _DriverChoiceTile(
+                      driver: driver,
+                      busy: data.busyDriverIds.contains(driver.id),
+                      onSelect: () => _assignDriver(context, driver),
+                    ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<_DriverAvailabilityData> _loadDrivers() async {
+    final db = FirebaseFirestore.instance;
+    final driverSnap = await db
+        .collection('users')
+        .where('role', isEqualTo: 'driver')
+        .where('isApproved', isEqualTo: true)
+        .get();
+    final busySnap = await db
+        .collection('orders')
+        .where('status', whereIn: ['accepted', 'inProgress']).get();
+    final busyIds = busySnap.docs
+        .map((doc) => doc.data()['driverId'] as String?)
+        .whereType<String>()
+        .toSet();
+    return _DriverAvailabilityData(driverSnap.docs, busyIds);
+  }
+
+  Future<void> _assignDriver(
+    BuildContext context,
+    QueryDocumentSnapshot<Map<String, dynamic>> driver,
+  ) async {
+    final data = driver.data();
+    if (data['isAvailable'] == false) return;
+    final db = FirebaseFirestore.instance;
+    await db.collection('orders').doc(order.orderId).update({
+      'status': 'accepted',
+      'driverId': driver.id,
+      'acceptedBidAmount': 100,
+      'acceptedAt': FieldValue.serverTimestamp(),
+      'assignedByStoreAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await db.collection('notifications').add({
+      'userId': driver.id,
+      'orderId': order.orderId,
+      'type': 'store_delivery_assigned',
+      'title': 'Restaurant delivery assigned',
+      'body':
+          '${order.storeName ?? 'Restaurant'} needs pickup to ${order.dropoffAddress}.',
+      'createdBy': order.storeId,
+      'read': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    if (context.mounted) Navigator.pop(context);
+  }
+}
+
+class _DriverAvailabilityData {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> drivers;
+  final Set<String> busyDriverIds;
+
+  const _DriverAvailabilityData(this.drivers, this.busyDriverIds);
+}
+
+class _DriverChoiceTile extends StatelessWidget {
+  final QueryDocumentSnapshot<Map<String, dynamic>> driver;
+  final bool busy;
+  final VoidCallback onSelect;
+
+  const _DriverChoiceTile({
+    required this.driver,
+    required this.busy,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = driver.data();
+    final name = data['fullName'] as String? ?? context.t('driver');
+    final phone = data['phoneNumber'] as String? ?? '';
+    final photo = data['profilePhotoBase64'] as String?;
+    final manuallyAvailable = data['isAvailable'] as bool? ?? true;
+    final available = manuallyAvailable && !busy;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundImage: photo == null || photo.isEmpty
+                ? null
+                : MemoryImage(base64Decode(photo)),
+            child: photo == null || photo.isEmpty
+                ? const Icon(Icons.person_outline_rounded)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: AppTextStyles.bodyMedium),
+                Text(
+                  phone,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary(context),
+                  ),
+                ),
+                Text(
+                  busy
+                      ? context.t('driver_busy')
+                      : manuallyAvailable
+                          ? context.t('available')
+                          : context.t('unavailable'),
+                  style: AppTextStyles.caption.copyWith(
+                    color: available ? AppColors.success : AppColors.error,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          FilledButton(
+            onPressed: available ? onSelect : null,
+            child: Text(context.t('choose')),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -194,6 +194,7 @@ class _JobTile extends StatelessWidget {
   }
 
   Color _statusColor(OrderStatus status) => switch (status) {
+        OrderStatus.storePending => AppColors.warning,
         OrderStatus.requested => AppColors.info,
         OrderStatus.priced => AppColors.warning,
         OrderStatus.accepted => AppColors.accent,

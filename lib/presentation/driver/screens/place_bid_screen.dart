@@ -104,8 +104,8 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                       : context.t('delivery_price'),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
+                                    decimal: true,
+                                  ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
                                       return context.t('field_required');
@@ -128,17 +128,17 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                     if (!_formKey.currentState!.validate()) {
                                       return;
                                     }
-                                    final driver =
-                                        (context.read<AuthBloc>().state
-                                                as AuthAuthenticated)
-                                            .user;
+                                    final driver = (context
+                                            .read<AuthBloc>()
+                                            .state as AuthAuthenticated)
+                                        .user;
                                     context.read<OrderBloc>().add(
-                                      OrderBidPlaceRequested(
-                                        orderId: widget.orderId,
-                                        driver: driver,
-                                        amount: double.parse(_amount.text),
-                                      ),
-                                    );
+                                          OrderBidPlaceRequested(
+                                            orderId: widget.orderId,
+                                            driver: driver,
+                                            amount: double.parse(_amount.text),
+                                          ),
+                                        );
                                   },
                                 ),
                               ] else if (order?.status ==

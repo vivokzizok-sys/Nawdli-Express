@@ -17,8 +17,8 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
-  }) : _auth = auth,
-       _firestore = firestore;
+  })  : _auth = auth,
+        _firestore = firestore;
 
   @override
   Stream<UserEntity?> authStateChanges() {

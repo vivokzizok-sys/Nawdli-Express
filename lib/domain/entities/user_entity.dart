@@ -8,48 +8,48 @@ enum StoreType { restaurant, grocery, other }
 
 extension UserRoleX on UserRole {
   String get name => switch (this) {
-    UserRole.client => 'client',
-    UserRole.driver => 'driver',
-    UserRole.store => 'store',
-    UserRole.admin => 'admin',
-  };
+        UserRole.client => 'client',
+        UserRole.driver => 'driver',
+        UserRole.store => 'store',
+        UserRole.admin => 'admin',
+      };
 
   static UserRole fromString(String value) => switch (value) {
-    'driver' => UserRole.driver,
-    'store' => UserRole.store,
-    'admin' => UserRole.admin,
-    _ => UserRole.client,
-  };
+        'driver' => UserRole.driver,
+        'store' => UserRole.store,
+        'admin' => UserRole.admin,
+        _ => UserRole.client,
+      };
 }
 
 extension VehicleTypeX on VehicleType {
   String get name => switch (this) {
-    VehicleType.bike => 'bike',
-    VehicleType.car => 'car',
-    VehicleType.truck => 'truck',
-  };
+        VehicleType.bike => 'bike',
+        VehicleType.car => 'car',
+        VehicleType.truck => 'truck',
+      };
 
   static VehicleType? fromString(String? value) => switch (value) {
-    'bike' => VehicleType.bike,
-    'car' => VehicleType.car,
-    'truck' => VehicleType.truck,
-    _ => null,
-  };
+        'bike' => VehicleType.bike,
+        'car' => VehicleType.car,
+        'truck' => VehicleType.truck,
+        _ => null,
+      };
 }
 
 extension StoreTypeX on StoreType {
   String get name => switch (this) {
-    StoreType.restaurant => 'restaurant',
-    StoreType.grocery => 'grocery',
-    StoreType.other => 'other',
-  };
+        StoreType.restaurant => 'restaurant',
+        StoreType.grocery => 'grocery',
+        StoreType.other => 'other',
+      };
 
   static StoreType? fromString(String? value) => switch (value) {
-    'restaurant' => StoreType.restaurant,
-    'grocery' => StoreType.grocery,
-    'other' => StoreType.other,
-    _ => null,
-  };
+        'restaurant' => StoreType.restaurant,
+        'grocery' => StoreType.grocery,
+        'other' => StoreType.other,
+        _ => null,
+      };
 }
 
 class UserEntity {
@@ -66,6 +66,7 @@ class UserEntity {
   final String? vehiclePhotoContentType;
   final StoreType? storeType;
   final String? storeAddress;
+  final bool isAvailable;
   final double rating;
   final int totalDeliveries;
   final LocationPoint? currentLocation;
@@ -84,6 +85,7 @@ class UserEntity {
     this.vehiclePhotoContentType,
     this.storeType,
     this.storeAddress,
+    this.isAvailable = true,
     this.rating = 0,
     this.totalDeliveries = 0,
     this.currentLocation,
@@ -112,6 +114,7 @@ class UserEntity {
       vehiclePhotoContentType: vehiclePhotoContentType,
       storeType: storeType,
       storeAddress: storeAddress,
+      isAvailable: isAvailable,
       rating: rating,
       totalDeliveries: totalDeliveries,
       currentLocation: currentLocation ?? this.currentLocation,

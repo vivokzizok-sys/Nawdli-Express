@@ -68,6 +68,9 @@ service cloud.firestore {
             'profilePhotoBase64',
             'storeType',
             'storeAddress',
+            'isAvailable',
+            'fcmTokens',
+            'fcmTokenUpdatedAt',
             'currentLocation',
             'locationUpdatedAt',
             'updatedAt'
@@ -93,16 +96,28 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/users/$(uid)).data.isApproved == true);
         allow create, update, delete: if isStore()
           && request.auth.uid == uid;
+        allow update: if isClient()
+          && request.resource.data.diff(resource.data)
+            .affectedKeys()
+            .hasOnly(['stock', 'updatedAt'])
+          && request.resource.data.stock is number
+          && request.resource.data.stock >= 0
+          && request.resource.data.stock <= resource.data.stock;
       }
     }
 
     match /orders/{orderId} {
       allow create: if isClient()
         && request.resource.data.clientId == request.auth.uid
-        && request.resource.data.status in ['open', 'requested']
+        && request.resource.data.status in ['open', 'requested', 'storePending']
         && (
           request.resource.data.status == 'open'
           || request.resource.data.driverId is string
+          || (
+            request.resource.data.status == 'storePending'
+            && request.resource.data.sourceType == 'store'
+            && request.resource.data.storeId is string
+          )
         );
 
       allow read: if isAdmin()
@@ -153,7 +168,7 @@ service cloud.firestore {
       allow update: if isClient()
         && resource.data.clientId == request.auth.uid
         && request.resource.data.clientId == resource.data.clientId
-        && resource.data.status in ['open', 'bidding', 'requested', 'priced']
+        && resource.data.status in ['open', 'bidding', 'requested', 'priced', 'storePending']
         && request.resource.data.status == 'cancelled'
         && request.resource.data.cancelledBy == request.auth.uid
         && request.resource.data.diff(resource.data)
@@ -225,6 +240,23 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data)
           .affectedKeys()
           .hasOnly(['status', 'deliveredAt', 'updatedAt']);
+
+      allow update: if isStore()
+        && resource.data.storeId == request.auth.uid
+        && resource.data.status == 'storePending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.driverId is string
+        && request.resource.data.acceptedBidAmount == 100
+        && request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasOnly([
+            'status',
+            'driverId',
+            'acceptedBidAmount',
+            'acceptedAt',
+            'assignedByStoreAt',
+            'updatedAt'
+          ]);
 
       allow update, delete: if isAdmin();
 

@@ -1,4 +1,5 @@
 enum OrderStatus {
+  storePending,
   requested,
   priced,
   rejected,
@@ -12,28 +13,30 @@ enum OrderStatus {
 
 extension OrderStatusX on OrderStatus {
   String get value => switch (this) {
-    OrderStatus.requested => 'requested',
-    OrderStatus.priced => 'priced',
-    OrderStatus.rejected => 'rejected',
-    OrderStatus.open => 'open',
-    OrderStatus.bidding => 'bidding',
-    OrderStatus.accepted => 'accepted',
-    OrderStatus.inProgress => 'inProgress',
-    OrderStatus.delivered => 'delivered',
-    OrderStatus.cancelled => 'cancelled',
-  };
+        OrderStatus.storePending => 'storePending',
+        OrderStatus.requested => 'requested',
+        OrderStatus.priced => 'priced',
+        OrderStatus.rejected => 'rejected',
+        OrderStatus.open => 'open',
+        OrderStatus.bidding => 'bidding',
+        OrderStatus.accepted => 'accepted',
+        OrderStatus.inProgress => 'inProgress',
+        OrderStatus.delivered => 'delivered',
+        OrderStatus.cancelled => 'cancelled',
+      };
 
   static OrderStatus fromString(String value) => switch (value) {
-    'requested' => OrderStatus.requested,
-    'priced' => OrderStatus.priced,
-    'rejected' => OrderStatus.rejected,
-    'bidding' => OrderStatus.bidding,
-    'accepted' => OrderStatus.accepted,
-    'inProgress' => OrderStatus.inProgress,
-    'delivered' => OrderStatus.delivered,
-    'cancelled' => OrderStatus.cancelled,
-    _ => OrderStatus.open,
-  };
+        'storePending' => OrderStatus.storePending,
+        'requested' => OrderStatus.requested,
+        'priced' => OrderStatus.priced,
+        'rejected' => OrderStatus.rejected,
+        'bidding' => OrderStatus.bidding,
+        'accepted' => OrderStatus.accepted,
+        'inProgress' => OrderStatus.inProgress,
+        'delivered' => OrderStatus.delivered,
+        'cancelled' => OrderStatus.cancelled,
+        _ => OrderStatus.open,
+      };
 }
 
 class LocationPoint {
@@ -64,6 +67,10 @@ class OrderEntity {
   final String? storePhone;
   final String? storeItemName;
   final double? storeItemPrice;
+  final int quantity;
+  final double deliveryFee;
+  final double? productsTotal;
+  final double? totalAmount;
   final DateTime? createdAt;
 
   const OrderEntity({
@@ -87,6 +94,10 @@ class OrderEntity {
     this.storePhone,
     this.storeItemName,
     this.storeItemPrice,
+    this.quantity = 1,
+    this.deliveryFee = 0,
+    this.productsTotal,
+    this.totalAmount,
     this.createdAt,
   });
 
@@ -118,6 +129,10 @@ class OrderEntity {
       storePhone: storePhone,
       storeItemName: storeItemName,
       storeItemPrice: storeItemPrice,
+      quantity: quantity,
+      deliveryFee: deliveryFee,
+      productsTotal: productsTotal,
+      totalAmount: totalAmount,
       createdAt: createdAt,
     );
   }

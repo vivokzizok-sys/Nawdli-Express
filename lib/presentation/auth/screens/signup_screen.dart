@@ -110,7 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         ButtonSegment(
                           value: UserRole.store,
-                          label: Text(context.t('store')),
+                          label: Text(context.t('restaurant')),
                           icon: Icon(Icons.storefront_outlined),
                         ),
                       ],
@@ -136,8 +136,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           return context.t('field_required');
                         }
                         return RegExp(
-                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                            ).hasMatch(v.trim())
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(v.trim())
                             ? null
                             : context.t('valid_email');
                       },
@@ -231,29 +231,21 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                     if (_role == UserRole.store) ...[
                       const SizedBox(height: 18),
-                      Text(
-                        context.t('store_type'),
-                        style: AppTextStyles.captionMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<StoreType>(
-                        value: _storeType,
-                        decoration: InputDecoration(
-                          hintText: context.t('store_type'),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceAlt(context),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border(context)),
                         ),
-                        items: StoreType.values
-                            .map(
-                              (type) => DropdownMenuItem(
-                                value: type,
-                                child: Text(context.t(type.name)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _storeType = value);
-                          }
-                        },
+                        child: Row(
+                          children: [
+                            const Icon(Icons.restaurant_outlined),
+                            const SizedBox(width: 10),
+                            Text(context.t('restaurant')),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
                       AppTextField(
@@ -328,29 +320,28 @@ class _SignupScreenState extends State<SignupScreen> {
                           return;
                         }
                         context.read<AuthBloc>().add(
-                          AuthSignUpRequested(
-                            email: _email.text,
-                            password: _password.text,
-                            fullName: _name.text,
-                            phoneNumber: _phone.text,
-                            role: _role,
-                            vehicleType: _role == UserRole.driver
-                                ? _vehicleType
-                                : null,
-                            vehiclePhoto: _role == UserRole.driver
-                                ? _vehiclePhoto
-                                : null,
-                            storeType: _role == UserRole.store
-                                ? _storeType
-                                : null,
-                            storeAddress: _role == UserRole.store
-                                ? _storeAddress.text
-                                : null,
-                            profilePhoto: _role == UserRole.store
-                                ? _storePhoto
-                                : null,
-                          ),
-                        );
+                              AuthSignUpRequested(
+                                email: _email.text,
+                                password: _password.text,
+                                fullName: _name.text,
+                                phoneNumber: _phone.text,
+                                role: _role,
+                                vehicleType: _role == UserRole.driver
+                                    ? _vehicleType
+                                    : null,
+                                vehiclePhoto: _role == UserRole.driver
+                                    ? _vehiclePhoto
+                                    : null,
+                                storeType:
+                                    _role == UserRole.store ? _storeType : null,
+                                storeAddress: _role == UserRole.store
+                                    ? _storeAddress.text
+                                    : null,
+                                profilePhoto: _role == UserRole.store
+                                    ? _storePhoto
+                                    : null,
+                              ),
+                            );
                       },
                     ),
                     const SizedBox(height: 12),

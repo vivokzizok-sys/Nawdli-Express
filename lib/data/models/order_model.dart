@@ -24,6 +24,10 @@ class OrderModel extends OrderEntity {
     super.storePhone,
     super.storeItemName,
     super.storeItemPrice,
+    super.quantity,
+    super.deliveryFee,
+    super.productsTotal,
+    super.totalAmount,
     super.createdAt,
   });
 
@@ -49,6 +53,10 @@ class OrderModel extends OrderEntity {
       storePhone: order.storePhone,
       storeItemName: order.storeItemName,
       storeItemPrice: order.storeItemPrice,
+      quantity: order.quantity,
+      deliveryFee: order.deliveryFee,
+      productsTotal: order.productsTotal,
+      totalAmount: order.totalAmount,
       createdAt: order.createdAt,
     );
   }
@@ -85,6 +93,10 @@ class OrderModel extends OrderEntity {
       storePhone: data['storePhone'] as String?,
       storeItemName: data['storeItemName'] as String?,
       storeItemPrice: (data['storeItemPrice'] as num?)?.toDouble(),
+      quantity: (data['quantity'] as num?)?.toInt() ?? 1,
+      deliveryFee: (data['deliveryFee'] as num?)?.toDouble() ?? 0,
+      productsTotal: (data['productsTotal'] as num?)?.toDouble(),
+      totalAmount: (data['totalAmount'] as num?)?.toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -116,6 +128,10 @@ class OrderModel extends OrderEntity {
       'storePhone': storePhone,
       'storeItemName': storeItemName,
       'storeItemPrice': storeItemPrice,
+      'quantity': quantity,
+      'deliveryFee': deliveryFee,
+      'productsTotal': productsTotal,
+      'totalAmount': totalAmount,
       'updatedAt': FieldValue.serverTimestamp(),
       if (creating) 'createdAt': FieldValue.serverTimestamp(),
     };

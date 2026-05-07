@@ -89,8 +89,8 @@ class AppSettingsScope extends InheritedNotifier<AppSettingsController> {
   }) : super(notifier: controller);
 
   static AppSettingsController of(BuildContext context) {
-    final scope = context
-        .dependOnInheritedWidgetOfExactType<AppSettingsScope>();
+    final scope =
+        context.dependOnInheritedWidgetOfExactType<AppSettingsScope>();
     assert(scope != null, 'AppSettingsScope was not found in the widget tree.');
     return scope!.notifier!;
   }
@@ -241,6 +241,7 @@ class AppStrings {
     'accepted_fare': 'Accepted fare',
     'leave_comment': 'Leave a comment (optional)',
     'status_open': 'Open',
+    'status_storePending': 'At restaurant',
     'status_requested': 'Requested',
     'status_priced': 'Priced',
     'status_bidding': 'Bidding',
@@ -322,8 +323,9 @@ class AppStrings {
     'refresh_status': 'Refresh Status',
     'driver_dashboard': 'Driver dashboard',
     'client_dashboard': 'Client dashboard',
-    'store_dashboard': 'Store dashboard',
-    'store_profile': 'Store profile',
+    'restaurant_dashboard': 'Restaurant dashboard',
+    'store_dashboard': 'Restaurant dashboard',
+    'store_profile': 'Restaurant profile',
     'store_not_found': 'Store not found',
     'no_stores': 'No stores available',
     'no_stores_body': 'Approved stores will appear here.',
@@ -340,6 +342,20 @@ class AppStrings {
     'store_order': 'Store order',
     'send_store_order': 'Send store order',
     'order_notes': 'Order notes',
+    'restaurant_products': 'Restaurant products',
+    'upload_product_photo': 'Upload product photo',
+    'stock': 'Stock',
+    'quantity': 'Quantity',
+    'order_now': 'Order',
+    'delivery_fee': 'Delivery fee',
+    'products_total': 'Products total',
+    'total': 'Total',
+    'order_sent_to_restaurant': 'Order sent to the restaurant.',
+    'driver_availability': 'Driver availability',
+    'available': 'Available',
+    'unavailable': 'Unavailable',
+    'driver_busy': 'Busy delivering',
+    'choose': 'Choose',
     'total_orders': 'Total orders',
     'active_orders': 'Active',
     'completed_orders': 'Completed',
@@ -497,6 +513,7 @@ class AppStrings {
     'accepted_fare': 'السعر المقبول',
     'leave_comment': 'اترك تعليقًا (اختياري)',
     'status_open': 'مفتوح',
+    'status_storePending': 'عند المطعم',
     'status_requested': 'مرسل للسائق',
     'status_priced': 'تم إرسال السعر',
     'status_bidding': 'توجد عروض',
@@ -672,6 +689,21 @@ class AppStrings {
         '\u0625\u0631\u0633\u0627\u0644 \u0637\u0644\u0628 \u0627\u0644\u0645\u062d\u0644',
     'order_notes':
         '\u0645\u0644\u0627\u062d\u0638\u0627\u062a \u0627\u0644\u0637\u0644\u0628',
+    'restaurant_dashboard': 'لوحة المطعم',
+    'restaurant_products': 'منتجات المطاعم',
+    'upload_product_photo': 'رفع صورة المنتج',
+    'stock': 'المخزون',
+    'quantity': 'الكمية',
+    'order_now': 'طلب',
+    'delivery_fee': 'سعر التوصيل',
+    'products_total': 'مجموع المنتجات',
+    'total': 'المجموع',
+    'order_sent_to_restaurant': 'تم إرسال الطلب إلى المطعم.',
+    'driver_availability': 'توفر السائق',
+    'available': 'متاح',
+    'unavailable': 'غير متاح',
+    'driver_busy': 'في توصيلة',
+    'choose': 'اختيار',
     'update_required':
         '\u062a\u062d\u062f\u064a\u062b \u0645\u0637\u0644\u0648\u0628',
     'update_required_body':

@@ -105,6 +105,7 @@ class OrderDetailScreen extends StatelessWidget {
                 ],
                 if (order.status == OrderStatus.open ||
                     order.status == OrderStatus.bidding ||
+                    order.status == OrderStatus.storePending ||
                     order.status == OrderStatus.requested ||
                     order.status == OrderStatus.priced) ...[
                   const SizedBox(height: 12),

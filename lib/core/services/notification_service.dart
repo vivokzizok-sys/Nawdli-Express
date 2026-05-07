@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
 class NotificationService {
   NotificationService({
@@ -72,6 +76,8 @@ class NotificationService {
   final FirebaseFirestore _firestore;
   final FlutterLocalNotificationsPlugin _plugin;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _notificationsSub;
+  StreamSubscription<RemoteMessage>? _fcmForegroundSub;
+  StreamSubscription<String>? _tokenRefreshSub;
   bool _initializedSnapshot = false;
   String _preferredSound = 'message_sound';
   int _notificationId = 1000;
@@ -92,6 +98,24 @@ class NotificationService {
       await android?.createNotificationChannel(channel);
     }
     await android?.requestNotificationsPermission();
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    _fcmForegroundSub = FirebaseMessaging.onMessage.listen((message) {
+      final notification = message.notification;
+      final title =
+          notification?.title ?? message.data['title'] ?? 'Veloce Express';
+      final body = notification?.body ?? message.data['body'] ?? '';
+      show(
+        title: title,
+        body: body,
+        type: message.data['type'] as String?,
+        payload: message.data['orderId'] as String?,
+      );
+    });
   }
 
   Future<void> show({
@@ -139,6 +163,7 @@ class NotificationService {
 
   Future<void> watchUserNotifications(String userId) async {
     await stopWatching();
+    await registerFcmToken(userId);
     _initializedSnapshot = false;
     _notificationsSub = _firestore
         .collection('notifications')
@@ -177,11 +202,40 @@ class NotificationService {
     });
   }
 
+  Future<void> registerFcmToken(String userId) async {
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await _firestore.collection('users').doc(userId).update({
+        'fcmTokens': FieldValue.arrayUnion([token]),
+        'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen(
+      (newToken) {
+        _firestore.collection('users').doc(userId).update({
+          'fcmTokens': FieldValue.arrayUnion([newToken]),
+          'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      },
+      onError: (Object error) {
+        debugPrint('FCM token refresh error: $error');
+      },
+    );
+  }
+
   Future<void> stopWatching() async {
     await _notificationsSub?.cancel();
+    await _tokenRefreshSub?.cancel();
     _notificationsSub = null;
+    _tokenRefreshSub = null;
     _initializedSnapshot = false;
   }
 
-  Future<void> dispose() => stopWatching();
+  Future<void> dispose() async {
+    await _fcmForegroundSub?.cancel();
+    await stopWatching();
+  }
 }
