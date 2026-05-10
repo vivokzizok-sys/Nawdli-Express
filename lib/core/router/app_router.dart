@@ -158,11 +158,12 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.clientDashboard,
           pageBuilder: (_, state) =>
-              _slide(state, const ClientDashboardScreen()),
+              _fromBottomNav(state, const ClientDashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.drivers,
-          pageBuilder: (_, state) => _slide(state, const DriversScreen()),
+          pageBuilder: (_, state) =>
+              _fromBottomNav(state, const DriversScreen()),
         ),
         GoRoute(
           path: AppRoutes.driverProfile,
@@ -183,7 +184,8 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.stores,
-          pageBuilder: (_, state) => _slide(state, const StoresScreen()),
+          pageBuilder: (_, state) =>
+              _fromBottomNav(state, const StoresScreen()),
         ),
         GoRoute(
           path: AppRoutes.storeProfile,
@@ -245,7 +247,7 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.driverDashboard,
           pageBuilder: (_, state) =>
-              _slide(state, const DriverDashboardScreen()),
+              _fromBottomNav(state, const DriverDashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.placeBid,
@@ -285,7 +287,8 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.settings,
-          pageBuilder: (_, state) => _slide(state, const SettingsScreen()),
+          pageBuilder: (_, state) =>
+              _fromBottomNav(state, const SettingsScreen()),
         ),
         GoRoute(
           path: AppRoutes.support,
@@ -345,6 +348,33 @@ class AppRouter {
         ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
         child: child,
       ),
+    );
+  }
+
+  static CustomTransitionPage _fromBottomNav(
+    GoRouterState state,
+    Widget child,
+  ) {
+    return CustomTransitionPage(
+      key: state.pageKey,
+      transitionDuration: const Duration(milliseconds: 240),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
+      child: child,
+      transitionsBuilder: (_, anim, __, child) {
+        final curved = CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            alignment: Alignment.bottomCenter,
+            scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

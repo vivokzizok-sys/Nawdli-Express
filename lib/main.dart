@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_text_styles.dart';
@@ -153,13 +154,95 @@ class _VeloceExpressAppState extends State<VeloceExpressApp> {
               ],
               builder: (context, child) => Directionality(
                 textDirection: _settingsController.textDirection,
-                child:
-                    _ForceUpdateGate(child: child ?? const SizedBox.shrink()),
+                child: _IntroGate(
+                  child:
+                      _ForceUpdateGate(child: child ?? const SizedBox.shrink()),
+                ),
               ),
               routerConfig: router,
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _IntroGate extends StatefulWidget {
+  final Widget child;
+
+  const _IntroGate({required this.child});
+
+  @override
+  State<_IntroGate> createState() => _IntroGateState();
+}
+
+class _IntroGateState extends State<_IntroGate> {
+  VideoPlayerController? _controller;
+  Timer? _fallbackTimer;
+  bool _finished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _playIntro();
+  }
+
+  Future<void> _playIntro() async {
+    final controller = VideoPlayerController.asset('assets/videos/intro.mp4');
+    _controller = controller;
+    try {
+      await controller.initialize();
+      await controller.setLooping(false);
+      await controller.play();
+      final duration = controller.value.duration;
+      _fallbackTimer = Timer(
+        duration > Duration.zero ? duration : const Duration(seconds: 4),
+        _finish,
+      );
+      controller.addListener(() {
+        if (controller.value.isCompleted) _finish();
+      });
+      if (mounted) setState(() {});
+    } catch (_) {
+      _fallbackTimer = Timer(const Duration(seconds: 2), _finish);
+    }
+  }
+
+  void _finish() {
+    if (_finished || !mounted) return;
+    setState(() => _finished = true);
+  }
+
+  @override
+  void dispose() {
+    _fallbackTimer?.cancel();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_finished) return widget.child;
+    final controller = _controller;
+    return Material(
+      color: AppColors.accentDark,
+      child: SizedBox.expand(
+        child: controller != null && controller.value.isInitialized
+            ? FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
+                ),
+              )
+            : const Center(
+                child: Text(
+                  'Veloce Express',
+                  style: AppTextStyles.largeTitle,
+                ),
+              ),
       ),
     );
   }
@@ -181,15 +264,10 @@ class _ForceUpdateGate extends StatelessWidget {
           .snapshots(),
       builder: (context, snap) {
         final data = snap.data?.data();
-        final latestVersion = data?['latestVersion'] as String?;
         final minVersion = data?['minVersion'] as String?;
         final apkUrl = data?['apkUrl'] as String?;
-        final forceUpdate = data?['forceUpdate'] as bool? ?? false;
-        final mustUpdate = (minVersion != null &&
-                _compareVersions(_currentVersion, minVersion) < 0) ||
-            (forceUpdate &&
-                latestVersion != null &&
-                _compareVersions(_currentVersion, latestVersion) < 0);
+        final mustUpdate = minVersion != null &&
+            _compareVersions(_currentVersion, minVersion) < 0;
 
         if (!mustUpdate) return child;
         return Material(

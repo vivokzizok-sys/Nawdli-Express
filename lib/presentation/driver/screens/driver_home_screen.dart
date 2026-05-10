@@ -37,7 +37,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       child: Scaffold(
         backgroundColor: AppColors.page(context),
         appBar: AppBar(
-          title: const Text('فيلوتشي إكسبرس'),
+          title: const Text('Veloce Express'),
           leading: AppMenuButton(user: user),
           actions: [
             Padding(
@@ -238,9 +238,9 @@ class _DriverBottomBar extends StatelessWidget {
           onDestinationSelected: (index) {
             switch (index) {
               case 1:
-                context.go('/driver/dashboard');
+                context.push('/driver/dashboard');
               case 2:
-                context.go('/settings');
+                context.push('/settings');
             }
           },
           destinations: [
@@ -290,7 +290,7 @@ class _DriverActiveTripBanner extends StatelessWidget {
               final client =
                   await context.read<OrderBloc>().getUser(order.clientId);
               if (client == null || !context.mounted) return;
-              context.go('/active-trip', extra: {
+              context.push('/active-trip', extra: {
                 'order': order,
                 'otherParty': client,
               });
@@ -339,7 +339,7 @@ class _JobTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.go('/driver/bid/${order.orderId}'),
+      onTap: () => context.push('/driver/bid/${order.orderId}'),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),

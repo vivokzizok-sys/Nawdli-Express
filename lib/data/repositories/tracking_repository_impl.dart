@@ -82,7 +82,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
           title,
           body,
           orderId: orderId,
-          type: 'delivered',
+          type: 'trip_started',
         );
       }
       return const Right(null);
@@ -118,7 +118,13 @@ class TrackingRepositoryImpl implements TrackingRepository {
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        await _sendPushQuietly(clientId, title, body);
+        await _sendPushQuietly(
+          clientId,
+          title,
+          body,
+          orderId: orderId,
+          type: 'delivered',
+        );
       }
       return const Right(null);
     } on FirebaseException catch (e) {

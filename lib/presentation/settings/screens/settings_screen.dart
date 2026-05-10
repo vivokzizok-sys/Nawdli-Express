@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -29,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: context.t('back'),
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(_homeForRole(user.role)),
         ),
         title: Text(context.t('settings')),
       ),
@@ -134,6 +135,13 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _homeForRole(UserRole role) => switch (role) {
+        UserRole.client => '/client/home',
+        UserRole.driver => '/driver/home',
+        UserRole.store => '/store/home',
+        UserRole.admin => '/admin/dashboard',
+      };
 }
 
 class _ProfileHeader extends StatelessWidget {

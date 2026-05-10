@@ -49,7 +49,13 @@ class OrderRepositoryImpl implements OrderRepository {
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        await _sendPushQuietly(order.driverId!, title, body);
+        await _sendPushQuietly(
+          order.driverId!,
+          title,
+          body,
+          orderId: ref.id,
+          type: 'direct_request',
+        );
       }
       if (order.storeId != null) {
         const title = 'New restaurant order';
@@ -65,7 +71,13 @@ class OrderRepositoryImpl implements OrderRepository {
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        await _sendPushQuietly(order.storeId!, title, body);
+        await _sendPushQuietly(
+          order.storeId!,
+          title,
+          body,
+          orderId: ref.id,
+          type: 'store_order',
+        );
       }
       final snap = await ref.get();
       return Right(OrderModel.fromFirestore(snap));
@@ -240,7 +252,13 @@ class OrderRepositoryImpl implements OrderRepository {
         'read': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      await _sendPushQuietly(driverId, title, body);
+      await _sendPushQuietly(
+        driverId,
+        title,
+        body,
+        orderId: orderId,
+        type: 'price_accepted',
+      );
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left(NetworkFailure(e.message ?? 'Failed to accept price'));
@@ -272,7 +290,13 @@ class OrderRepositoryImpl implements OrderRepository {
           'read': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        await _sendPushQuietly(driverId, title, body);
+        await _sendPushQuietly(
+          driverId,
+          title,
+          body,
+          orderId: orderId,
+          type: 'price_rejected',
+        );
       }
       return const Right(null);
     } on FirebaseException catch (e) {
@@ -333,7 +357,13 @@ class OrderRepositoryImpl implements OrderRepository {
         'read': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      await _sendPushQuietly(bid.driverId, title, body);
+      await _sendPushQuietly(
+        bid.driverId,
+        title,
+        body,
+        orderId: orderId,
+        type: 'bid_accepted',
+      );
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left(NetworkFailure(e.message ?? 'Failed to accept bid'));

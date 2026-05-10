@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/order_model.dart';
 import '../../../domain/entities/order_entity.dart';
@@ -50,7 +51,7 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
             leading: IconButton(
               tooltip: context.t('back'),
               icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => context.go('/driver/home'),
+              onPressed: () => context.popOrGo('/driver/home'),
             ),
             title: Text(context.t('delivery_request')),
           ),
@@ -153,7 +154,7 @@ class _PlaceBidScreenState extends State<PlaceBidScreen> {
                                     if (client == null || !context.mounted) {
                                       return;
                                     }
-                                    context.go(
+                                    context.push(
                                       '/active-trip',
                                       extra: {
                                         'order': order,

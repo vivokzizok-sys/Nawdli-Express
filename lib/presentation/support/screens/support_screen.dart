@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -58,7 +58,7 @@ class _SupportScreenState extends State<SupportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.t('support_sent'))),
       );
-      context.pop();
+      context.popOrGo('/settings');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -73,7 +73,7 @@ class _SupportScreenState extends State<SupportScreen> {
         leading: IconButton(
           tooltip: context.t('back'),
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/settings'),
         ),
         title: Text(context.t('support')),
       ),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/user_model.dart';
 import '../../shared/widgets/shared_widgets.dart';
@@ -21,7 +22,7 @@ class StoresScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: context.t('back'),
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/client/home'),
+          onPressed: () => context.popOrGo('/client/home'),
         ),
         title: Text(context.t('stores')),
       ),

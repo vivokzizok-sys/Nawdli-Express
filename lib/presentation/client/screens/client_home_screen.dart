@@ -23,7 +23,7 @@ class ClientHomeScreen extends StatelessWidget {
       backgroundColor: AppColors.page(context),
       appBar: AppBar(
         leading: AppMenuButton(user: user),
-        title: const Text('فيلوتشي إكسبرس'),
+        title: const Text('Veloce Express'),
         actions: [_HeaderAvatar(user: user), const SizedBox(width: 12)],
       ),
       body: Column(
@@ -74,13 +74,13 @@ class _ClientBottomBar extends StatelessWidget {
           onDestinationSelected: (index) {
             switch (index) {
               case 1:
-                context.go('/client/drivers');
+                context.push('/client/drivers');
               case 2:
-                context.go('/client/dashboard');
+                context.push('/client/dashboard');
               case 3:
-                context.go('/client/stores');
+                context.push('/client/stores');
               case 4:
-                context.go('/settings');
+                context.push('/settings');
             }
           },
           destinations: [
@@ -140,7 +140,7 @@ class _ClientActiveTripBanner extends StatelessWidget {
                     order.driverId!,
                   );
               if (driver == null || !context.mounted) return;
-              context.go(
+              context.push(
                 '/active-trip',
                 extra: {'order': order, 'otherParty': driver},
               );

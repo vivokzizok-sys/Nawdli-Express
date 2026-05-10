@@ -26,24 +26,15 @@ class RestaurantProductsSection extends StatefulWidget {
 
 class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
   final _search = TextEditingController();
-  int _rotation = 0;
-  Timer? _rotationTimer;
 
   @override
   void initState() {
     super.initState();
     _search.addListener(() => setState(() {}));
-    _rotationTimer = Timer.periodic(
-      const Duration(seconds: 45),
-      (_) {
-        if (mounted) setState(() => _rotation++);
-      },
-    );
   }
 
   @override
   void dispose() {
-    _rotationTimer?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -72,8 +63,7 @@ class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
           wilaya: user.wilaya,
           query: _search.text,
         );
-        final featured = [...products]
-          ..shuffle(Random(_rotation + DateTime.now().day));
+        final featured = [...products]..shuffle(Random(user.uid.hashCode));
         final topProducts = products.length >= 6
             ? featured.take(3).toList()
             : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
@@ -327,81 +317,21 @@ class _DeliveryPerkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.surface(context).withValues(alpha: 0.86),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.border(context)),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow(context),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: AppColors.accentLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.bolt_rounded,
-                    color: AppColors.accentDark,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.t('fast_delivery'),
-                        style: AppTextStyles.title3.copyWith(
-                          color: AppColors.accentDark,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        context.t('fast_delivery_body'),
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          Expanded(
+            child: Text(
+              context.t('choose_your_order'),
+              style: AppTextStyles.title2.copyWith(
+                color: AppColors.textPrimary(context),
+              ),
             ),
           ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.t('choose_your_order'),
-                  style: AppTextStyles.title2.copyWith(
-                    color: AppColors.textPrimary(context),
-                  ),
-                ),
-              ),
-              Text(
-                '$productsCount',
-                style: AppTextStyles.captionMedium.copyWith(
-                  color: AppColors.accentDark,
-                ),
-              ),
-            ],
+          Text(
+            '$productsCount',
+            style: AppTextStyles.captionMedium.copyWith(
+              color: AppColors.accentDark,
+            ),
           ),
         ],
       ),

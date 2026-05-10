@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/currency.dart';
 import '../../../domain/entities/order_entity.dart';
@@ -35,9 +36,9 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
         leading: IconButton(
           tooltip: context.t('back'),
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/client/home'),
+          onPressed: () => context.popOrGo('/client/home'),
         ),
-        title: const Text('فيلوتشي إكسبرس'),
+        title: const Text('Veloce Express'),
       ),
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
@@ -128,7 +129,7 @@ class _DashboardOrderTile extends StatelessWidget {
         order.status == OrderStatus.cancelled;
     return InkWell(
       borderRadius: BorderRadius.circular(14),
-      onTap: () => context.go('/client/order/${order.orderId}'),
+      onTap: () => context.push('/client/order/${order.orderId}'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

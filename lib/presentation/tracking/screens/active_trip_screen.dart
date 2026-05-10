@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/services/push_notification_sender.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/currency.dart';
@@ -113,7 +114,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen>
       builder: (context, state) {
         final loading = state is TrackingLoading;
         return PopScope(
-          canPop: false,
+          canPop: context.canPop(),
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
             context.go(_isDriver ? '/driver/home' : '/client/home');
@@ -130,8 +131,9 @@ class _ActiveTripScreenState extends State<ActiveTripScreen>
                         child: _TopStatusBar(
                           order: widget.order,
                           pulseCtrl: _pulseCtrl,
-                          onBack: () => context
-                              .go(_isDriver ? '/driver/home' : '/client/home'),
+                          onBack: () => context.popOrGo(
+                            _isDriver ? '/driver/home' : '/client/home',
+                          ),
                         ),
                       ),
                       Expanded(

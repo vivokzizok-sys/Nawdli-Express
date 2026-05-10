@@ -30,7 +30,7 @@ class StoreHomeScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.page(context),
         appBar: AppBar(
-          title: const Text('فيلوتشي إكسبرس'),
+          title: const Text('Veloce Express'),
           leading: AppMenuButton(user: user),
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -89,7 +89,7 @@ class _StoreBottomBar extends StatelessWidget {
           height: 72,
           selectedIndex: 0,
           onDestinationSelected: (index) {
-            if (index == 2) context.go('/settings');
+            if (index == 2) context.push('/settings');
           },
           destinations: [
             NavigationDestination(

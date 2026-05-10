@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../domain/entities/order_entity.dart';
@@ -63,8 +64,7 @@ class _StoreOrderScreenState extends State<StoreOrderScreen> {
             leading: IconButton(
               tooltip: context.t('back'),
               icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () =>
-                  context.go('/client/store-profile', extra: widget.store),
+              onPressed: () => context.popOrGo('/client/stores'),
             ),
             title: Text(context.t('store_order')),
           ),

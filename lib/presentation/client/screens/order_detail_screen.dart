@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/currency.dart';
 import '../../../data/models/bid_model.dart';
@@ -58,7 +59,7 @@ class OrderDetailScreen extends StatelessWidget {
               leading: IconButton(
                 tooltip: context.t('back'),
                 icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => context.go('/client/home'),
+                onPressed: () => context.popOrGo('/client/home'),
               ),
               title: Text(context.t('order')),
               actions: [
@@ -89,7 +90,7 @@ class OrderDetailScreen extends StatelessWidget {
                                 .read<OrderBloc>()
                                 .getUser(order.driverId!);
                             if (driver == null || !context.mounted) return;
-                            context.go('/active-trip', extra: {
+                            context.push('/active-trip', extra: {
                               'order': order,
                               'otherParty': driver,
                             });
@@ -220,7 +221,7 @@ class _DirectRequestPanel extends StatelessWidget {
           final bloc = context.read<OrderBloc>();
           final driver = await bloc.getUser(driverId);
           if (!context.mounted || driver == null) return;
-          context.go('/active-trip', extra: {
+          context.push('/active-trip', extra: {
             'order': order.copyWith(status: OrderStatus.accepted),
             'otherParty': driver,
           });
@@ -463,7 +464,7 @@ class _BidTile extends StatelessWidget {
                       final driver =
                           await context.read<OrderBloc>().getUser(bid.driverId);
                       if (driver != null && context.mounted) {
-                        context.go('/active-trip', extra: {
+                        context.push('/active-trip', extra: {
                           'order': order.copyWith(
                             status: OrderStatus.accepted,
                             driverId: bid.driverId,

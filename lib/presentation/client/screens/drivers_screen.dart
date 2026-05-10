@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/user_model.dart';
 import '../../../domain/entities/user_entity.dart';
@@ -23,9 +24,9 @@ class DriversScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: context.t('back'),
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/client/home'),
+          onPressed: () => context.popOrGo('/client/home'),
         ),
-        title: const Text('فيلوتشي إكسبرس'),
+        title: const Text('Veloce Express'),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
