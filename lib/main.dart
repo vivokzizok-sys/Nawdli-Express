@@ -178,6 +178,8 @@ class _IntroGate extends StatefulWidget {
 }
 
 class _IntroGateState extends State<_IntroGate> {
+  static const _introDuration = Duration(seconds: 2);
+
   VideoPlayerController? _controller;
   Timer? _fallbackTimer;
   bool _finished = false;
@@ -195,17 +197,13 @@ class _IntroGateState extends State<_IntroGate> {
       await controller.initialize();
       await controller.setLooping(false);
       await controller.play();
-      final duration = controller.value.duration;
-      _fallbackTimer = Timer(
-        duration > Duration.zero ? duration : const Duration(seconds: 4),
-        _finish,
-      );
+      _fallbackTimer = Timer(_introDuration, _finish);
       controller.addListener(() {
         if (controller.value.isCompleted) _finish();
       });
       if (mounted) setState(() {});
     } catch (_) {
-      _fallbackTimer = Timer(const Duration(seconds: 2), _finish);
+      _fallbackTimer = Timer(_introDuration, _finish);
     }
   }
 
