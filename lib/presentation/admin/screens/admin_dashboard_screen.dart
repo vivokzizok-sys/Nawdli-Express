@@ -29,7 +29,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 6, vsync: this);
+    _tabCtrl = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -79,6 +79,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Tab(text: context.t('users')),
             Tab(text: context.t('tickets')),
             Tab(text: context.t('banners')),
+            Tab(text: context.t('call_logs')),
             Tab(text: context.t('payments')),
           ],
         ),
@@ -91,6 +92,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           _UsersTab(db: _db),
           _TicketsTab(db: _db),
           _BannersTab(db: _db),
+          _CallsTab(db: _db),
           _PaymentsTab(db: _db),
         ],
       ),
@@ -1284,6 +1286,195 @@ Future<void> _replyToTicket(
   ).catchError((_) {});
 }
 
+class _CallsTab extends StatelessWidget {
+  final FirebaseFirestore db;
+
+  const _CallsTab({required this.db});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(context.t('drivers'), style: AppTextStyles.title3),
+        const SizedBox(height: 10),
+        _CallSummarySection(
+          db: db,
+          collection: 'driver_call_logs',
+          targetIdField: 'driverId',
+          targetNameField: 'driverName',
+          targetPhoneField: 'driverPhone',
+          fallbackTitle: context.t('driver'),
+          icon: Icons.local_shipping_outlined,
+          color: AppColors.driverRole,
+        ),
+        const SizedBox(height: 20),
+        Text(context.t('stores'), style: AppTextStyles.title3),
+        const SizedBox(height: 10),
+        _CallSummarySection(
+          db: db,
+          collection: 'store_call_logs',
+          targetIdField: 'storeId',
+          targetNameField: 'storeName',
+          targetPhoneField: 'storePhone',
+          fallbackTitle: context.t('store'),
+          icon: Icons.storefront_outlined,
+          color: AppColors.accent,
+        ),
+      ],
+    );
+  }
+}
+
+class _CallSummarySection extends StatelessWidget {
+  final FirebaseFirestore db;
+  final String collection;
+  final String targetIdField;
+  final String targetNameField;
+  final String targetPhoneField;
+  final String fallbackTitle;
+  final IconData icon;
+  final Color color;
+
+  const _CallSummarySection({
+    required this.db,
+    required this.collection,
+    required this.targetIdField,
+    required this.targetNameField,
+    required this.targetPhoneField,
+    required this.fallbackTitle,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: db
+          .collection(collection)
+          .orderBy('createdAt', descending: true)
+          .limit(500)
+          .snapshots(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+        final summaries = <String, _CallSummary>{};
+        for (final doc in snap.data!.docs) {
+          final data = doc.data();
+          final id = data[targetIdField] as String? ?? doc.id;
+          final existing = summaries[id];
+          summaries[id] = _CallSummary(
+            name: (data[targetNameField] as String?) ??
+                existing?.name ??
+                fallbackTitle,
+            phone: (data[targetPhoneField] as String?) ?? existing?.phone ?? '',
+            count: (existing?.count ?? 0) + 1,
+          );
+        }
+        final items = summaries.entries.toList()
+          ..sort((a, b) => b.value.count.compareTo(a.value.count));
+
+        if (items.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: Text(
+              context.t('no_call_logs'),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textSecondary(context),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: items.map((entry) {
+            final summary = entry.value;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: color.withValues(alpha: 0.12),
+                    child: Icon(icon, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(summary.name, style: AppTextStyles.bodyMedium),
+                        if (summary.phone.isNotEmpty)
+                          Text(
+                            summary.phone,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textSecondary(context),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '${summary.count}',
+                    style: AppTextStyles.title3.copyWith(color: color),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _CallSummary {
+  final String name;
+  final String phone;
+  final int count;
+
+  const _CallSummary({
+    required this.name,
+    required this.phone,
+    required this.count,
+  });
+}
+
+class _AdminCategoryAsset {
+  final String id;
+  final IconData icon;
+  final Color color;
+
+  const _AdminCategoryAsset(this.id, this.icon, this.color);
+}
+
+const _adminCategoryAssets = [
+  _AdminCategoryAsset(
+      'restaurant', Icons.restaurant_outlined, AppColors.accent),
+  _AdminCategoryAsset(
+    'grocery',
+    Icons.local_grocery_store_outlined,
+    AppColors.success,
+  ),
+  _AdminCategoryAsset(
+    'hardware',
+    Icons.construction_outlined,
+    AppColors.warning,
+  ),
+  _AdminCategoryAsset('produce', Icons.eco_outlined, AppColors.info),
+];
+
 class _BannersTab extends StatefulWidget {
   final FirebaseFirestore db;
 
@@ -1564,6 +1755,7 @@ class _PaymentCardState extends State<_PaymentCard> {
 
 class _BannersTabState extends State<_BannersTab> {
   bool _loading = false;
+  String? _categoryUploadKey;
 
   Future<void> _addBanner() async {
     final picked = await ImagePicker().pickImage(
@@ -1595,11 +1787,68 @@ class _BannersTabState extends State<_BannersTab> {
     }
   }
 
+  Future<void> _setCategoryImage({
+    required String categoryId,
+    required String field,
+    required int maxWidth,
+    required int maxHeight,
+  }) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+      maxWidth: maxWidth.toDouble(),
+      maxHeight: maxHeight.toDouble(),
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (bytes.length > 750 * 1024) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('image_too_large'))),
+      );
+      return;
+    }
+    final uploadKey = '$categoryId-$field';
+    setState(() => _categoryUploadKey = uploadKey);
+    try {
+      await widget.db.collection('app_categories').doc(categoryId).set({
+        field: base64Encode(bytes),
+        'isActive': true,
+        'sortOrder': _adminCategoryAssets
+            .indexWhere((category) => category.id == categoryId),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } finally {
+      if (mounted) setState(() => _categoryUploadKey = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        Text(context.t('categories'), style: AppTextStyles.title3),
+        const SizedBox(height: 10),
+        _CategoryAssetsEditor(
+          db: widget.db,
+          loadingKey: _categoryUploadKey,
+          onUploadCircle: (categoryId) => _setCategoryImage(
+            categoryId: categoryId,
+            field: 'circleImageBase64',
+            maxWidth: 600,
+            maxHeight: 600,
+          ),
+          onUploadBanner: (categoryId) => _setCategoryImage(
+            categoryId: categoryId,
+            field: 'bannerImageBase64',
+            maxWidth: 1280,
+            maxHeight: 720,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(context.t('banners'), style: AppTextStyles.title3),
+        const SizedBox(height: 10),
         PrimaryButton(
           label: context.t('add_banner'),
           icon: const Icon(Icons.add_photo_alternate_outlined),
@@ -1674,6 +1923,151 @@ class _BannersTabState extends State<_BannersTab> {
           },
         ),
       ],
+    );
+  }
+}
+
+class _CategoryAssetsEditor extends StatelessWidget {
+  final FirebaseFirestore db;
+  final String? loadingKey;
+  final ValueChanged<String> onUploadCircle;
+  final ValueChanged<String> onUploadBanner;
+
+  const _CategoryAssetsEditor({
+    required this.db,
+    required this.loadingKey,
+    required this.onUploadCircle,
+    required this.onUploadBanner,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: db.collection('app_categories').snapshots(),
+      builder: (context, snap) {
+        final docs = {
+          for (final doc in snap.data?.docs ?? const []) doc.id: doc.data(),
+        };
+        return Column(
+          children: _adminCategoryAssets.map((category) {
+            final data = docs[category.id] ?? const <String, dynamic>{};
+            final circle = data['circleImageBase64'] as String? ?? '';
+            final banner = data['bannerImageBase64'] as String? ?? '';
+            final active = data['isActive'] as bool? ?? true;
+            final circleKey = '${category.id}-circleImageBase64';
+            final bannerKey = '${category.id}-bannerImageBase64';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: category.color.withValues(alpha: 0.12),
+                        backgroundImage: circle.isEmpty
+                            ? null
+                            : MemoryImage(base64Decode(circle)),
+                        child: circle.isEmpty
+                            ? Icon(category.icon, color: category.color)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          context.t(category.id),
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: active,
+                        onChanged: (value) => db
+                            .collection('app_categories')
+                            .doc(category.id)
+                            .set({
+                          'isActive': value,
+                          'sortOrder': _adminCategoryAssets.indexOf(category),
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        }, SetOptions(merge: true)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: banner.isEmpty
+                          ? Container(
+                              color: AppColors.surfaceAlt(context),
+                              child: Icon(
+                                Icons.image_outlined,
+                                color: AppColors.textSecondary(context),
+                              ),
+                            )
+                          : Image.memory(
+                              base64Decode(banner),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: AppColors.surfaceAlt(context),
+                                child: const Icon(Icons.broken_image_outlined),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: loadingKey == null
+                              ? () => onUploadCircle(category.id)
+                              : null,
+                          icon: loadingKey == circleKey
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.circle_outlined),
+                          label: Text(context.t('category_circle')),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: loadingKey == null
+                              ? () => onUploadBanner(category.id)
+                              : null,
+                          icon: loadingKey == bannerKey
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.panorama_outlined),
+                          label: Text(context.t('category_banner')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

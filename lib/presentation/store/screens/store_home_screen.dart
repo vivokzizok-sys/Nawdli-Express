@@ -190,6 +190,8 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
         'storeAddress': widget.store.storeAddress,
         'storeWilaya': widget.store.wilaya,
         'storeCommune': widget.store.commune,
+        'storeType': widget.store.storeType?.name ?? 'restaurant',
+        'category': widget.store.storeType?.name ?? 'restaurant',
         'storeDeliveryFee': storeDeliveryFee,
         'searchKeywords': _buildSearchKeywords(
           name: _name.text.trim(),

@@ -160,6 +160,11 @@ class AppStrings {
     'store_type': 'Store type',
     'restaurant': 'Restaurant',
     'grocery': 'Grocery',
+    'hardware': 'Home supplies',
+    'produce': 'Fruit and vegetables',
+    'categories': 'Categories',
+    'category_circle': 'Circle image',
+    'category_banner': '16:9 banner',
     'other': 'Other',
     'store_address': 'Store address',
     'upload_store_photo': 'Upload store photo',
@@ -640,6 +645,13 @@ class AppStrings {
     'store_type': '\u0646\u0648\u0639 \u0627\u0644\u0645\u062d\u0644',
     'restaurant': '\u0645\u0637\u0639\u0645',
     'grocery': '\u0645\u0648\u0627\u062f \u063a\u0630\u0627\u0626\u064a\u0629',
+    'hardware':
+        '\u0643\u0646\u0643\u0627\u0631\u064a \u0648\u0644\u0648\u0627\u0632\u0645 \u0627\u0644\u0645\u0646\u0627\u0632\u0644',
+    'produce': '\u062e\u0636\u0631 \u0648\u0641\u0648\u0627\u0643\u0647',
+    'categories': '\u0627\u0644\u062a\u0635\u0646\u064a\u0641\u0627\u062a',
+    'category_circle':
+        '\u0635\u0648\u0631\u0629 \u0627\u0644\u062f\u0627\u0626\u0631\u0629',
+    'category_banner': '\u0628\u0627\u0646\u0631 16:9',
     'other': '\u0623\u062e\u0631\u0649',
     'store_address':
         '\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0645\u062d\u0644',

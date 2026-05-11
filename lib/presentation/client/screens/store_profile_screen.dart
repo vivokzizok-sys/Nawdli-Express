@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_navigation.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../domain/entities/user_entity.dart';
+import '../../auth/bloc/auth_bloc.dart';
 import '../../shared/widgets/shared_widgets.dart';
 
 class StoreProfileScreen extends StatelessWidget {
@@ -37,7 +39,7 @@ class StoreProfileScreen extends StatelessWidget {
           PrimaryButton(
             label: context.t('call_store'),
             icon: const Icon(Icons.call_rounded),
-            onPressed: () => _call(store.phoneNumber),
+            onPressed: () => _call(context),
           ),
           const SizedBox(height: 20),
           Text(context.t('menu_items'), style: AppTextStyles.title3),
@@ -48,8 +50,18 @@ class StoreProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _call(String phone) async {
-    final normalized = phone.replaceAll(RegExp(r'[\s\-.]'), '');
+  Future<void> _call(BuildContext context) async {
+    final client = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+    await FirebaseFirestore.instance.collection('store_call_logs').add({
+      'storeId': store.uid,
+      'storeName': store.fullName,
+      'storePhone': store.phoneNumber,
+      'clientId': client.uid,
+      'clientName': client.fullName,
+      'clientPhone': client.phoneNumber,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    final normalized = store.phoneNumber.replaceAll(RegExp(r'[\s\-.]'), '');
     await launchUrl(Uri(scheme: 'tel', path: normalized));
   }
 }
@@ -96,6 +108,13 @@ class _StoreHero extends StatelessWidget {
                         color: AppColors.textSecondary(context),
                       ),
                     ),
+                    if (store.phoneNumber.isNotEmpty)
+                      Text(
+                        store.phoneNumber,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary(context),
+                        ),
+                      ),
                   ],
                 ),
               ),

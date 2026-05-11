@@ -118,6 +118,7 @@ class DriverProfileScreen extends StatelessWidget {
     await FirebaseFirestore.instance.collection('driver_call_logs').add({
       'driverId': driver.uid,
       'driverName': driver.fullName,
+      'driverPhone': driver.phoneNumber,
       'clientId': client.uid,
       'clientName': client.fullName,
       'clientPhone': client.phoneNumber,

@@ -269,21 +269,26 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                     if (_role == UserRole.store) ...[
                       const SizedBox(height: 18),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceAlt(context),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border(context)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.restaurant_outlined),
-                            const SizedBox(width: 10),
-                            Text(context.t('restaurant')),
-                          ],
-                        ),
+                      Text(
+                        context.t('store_type'),
+                        style: AppTextStyles.captionMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: StoreType.values
+                            .where((type) => type != StoreType.other)
+                            .map(
+                              (type) => ChoiceChip(
+                                selected: _storeType == type,
+                                label: Text(context.t(type.name)),
+                                avatar: Icon(_storeTypeIcon(type), size: 18),
+                                onSelected: (_) =>
+                                    setState(() => _storeType = type),
+                              ),
+                            )
+                            .toList(),
                       ),
                       const SizedBox(height: 12),
                       AppTextField(
@@ -401,3 +406,11 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 }
+
+IconData _storeTypeIcon(StoreType type) => switch (type) {
+      StoreType.restaurant => Icons.restaurant_outlined,
+      StoreType.grocery => Icons.local_grocery_store_outlined,
+      StoreType.hardware => Icons.construction_outlined,
+      StoreType.produce => Icons.eco_outlined,
+      StoreType.other => Icons.storefront_outlined,
+    };

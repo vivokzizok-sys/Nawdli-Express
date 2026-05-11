@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,12 +49,19 @@ class _HeaderAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: 20,
       backgroundColor: AppColors.accentLight,
-      child: Text(
-        user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'V',
-        style: AppTextStyles.captionMedium.copyWith(
-          color: AppColors.accentDark,
-        ),
-      ),
+      backgroundImage:
+          user.profilePhotoBase64 == null || user.profilePhotoBase64!.isEmpty
+              ? null
+              : MemoryImage(base64Decode(user.profilePhotoBase64!)),
+      child: user.profilePhotoBase64 != null &&
+              user.profilePhotoBase64!.isNotEmpty
+          ? null
+          : Text(
+              user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'V',
+              style: AppTextStyles.captionMedium.copyWith(
+                color: AppColors.accentDark,
+              ),
+            ),
     );
   }
 }

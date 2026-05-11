@@ -358,6 +358,15 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    match /store_call_logs/{logId} {
+      allow create: if isClient()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.storeId is string;
+      allow read: if isAdmin()
+        || (isStore() && resource.data.storeId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
     match /driver_reviews/{reviewId} {
       allow read: if isApproved();
       allow create: if isClient()
@@ -391,6 +400,11 @@ service cloud.firestore {
     }
 
     match /app_banners/{bannerId} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    match /app_categories/{categoryId} {
       allow read: if isApproved();
       allow write: if isAdmin();
     }

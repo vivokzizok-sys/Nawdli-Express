@@ -24,8 +24,46 @@ class RestaurantProductsSection extends StatefulWidget {
       _RestaurantProductsSectionState();
 }
 
+class _MarketplaceCategory {
+  final String id;
+  final IconData icon;
+  final Color color;
+
+  const _MarketplaceCategory({
+    required this.id,
+    required this.icon,
+    required this.color,
+  });
+
+  String label(BuildContext context) => context.t(id);
+}
+
+const _marketplaceCategories = [
+  _MarketplaceCategory(
+    id: 'restaurant',
+    icon: Icons.restaurant_outlined,
+    color: AppColors.accent,
+  ),
+  _MarketplaceCategory(
+    id: 'grocery',
+    icon: Icons.local_grocery_store_outlined,
+    color: AppColors.success,
+  ),
+  _MarketplaceCategory(
+    id: 'hardware',
+    icon: Icons.construction_outlined,
+    color: AppColors.warning,
+  ),
+  _MarketplaceCategory(
+    id: 'produce',
+    icon: Icons.eco_outlined,
+    color: AppColors.info,
+  ),
+];
+
 class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
   final _search = TextEditingController();
+  _MarketplaceCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -42,78 +80,100 @@ class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
   @override
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collectionGroup('menu_items')
-          .limit(120)
-          .snapshots(),
-      builder: (context, snap) {
-        if (snap.hasError) {
-          return _LoadFailure(
-            message: context.t('products_load_error'),
-            details: snap.error.toString(),
-          );
+    return PopScope(
+      canPop: _selectedCategory == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _selectedCategory != null) {
+          setState(() => _selectedCategory = null);
         }
-        if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-        }
-
-        final products = _filterProducts(
-          snap.data!.docs,
-          wilaya: user.wilaya,
-          query: _search.text,
-        );
-        final featured = [...products]..shuffle(Random(user.uid.hashCode));
-        final topProducts = products.length >= 6
-            ? featured.take(3).toList()
-            : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        final featuredIds = topProducts.map((doc) => doc.id).toSet();
-        final gridProducts = products
-            .where((doc) => !featuredIds.contains(doc.id))
-            .toList(growable: false);
-
-        return CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _MarketplaceHeader(
-                search: _search,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _DeliveryPerkCard(productsCount: products.length),
-            ),
-            if (topProducts.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _FeaturedProductsRow(products: topProducts),
-              ),
-            if (gridProducts.isEmpty && topProducts.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: EmptyState(
-                  icon: Icons.restaurant_menu_outlined,
-                  title: context.t('no_menu_items'),
-                  subtitle: context.t('store_menu_empty'),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 108),
-                sliver: SliverGrid(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, index) => _ProductCard(doc: gridProducts[index]),
-                    childCount: gridProducts.length,
-                  ),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.54,
-                  ),
-                ),
-              ),
-          ],
-        );
       },
+      child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collectionGroup('menu_items')
+            .limit(120)
+            .snapshots(),
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return _LoadFailure(
+              message: context.t('products_load_error'),
+              details: snap.error.toString(),
+            );
+          }
+          if (!snap.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            );
+          }
+
+          final products = _filterProducts(
+            snap.data!.docs,
+            wilaya: user.wilaya,
+            query: _search.text,
+            categoryId: _selectedCategory?.id,
+          );
+          final featured = [...products]..shuffle(Random(user.uid.hashCode));
+          final topProducts = products.length >= 6
+              ? featured.take(3).toList()
+              : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+          final featuredIds = topProducts.map((doc) => doc.id).toSet();
+          final gridProducts = products
+              .where((doc) => !featuredIds.contains(doc.id))
+              .toList(growable: false);
+
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _MarketplaceHeader(
+                  search: _search,
+                  selectedCategory: _selectedCategory,
+                  onCategorySelected: (category) =>
+                      setState(() => _selectedCategory = category),
+                  onBack: _selectedCategory == null
+                      ? null
+                      : () => setState(() => _selectedCategory = null),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _DeliveryPerkCard(
+                  productsCount: products.length,
+                  category: _selectedCategory,
+                ),
+              ),
+              if (topProducts.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _FeaturedProductsRow(products: topProducts),
+                ),
+              if (gridProducts.isEmpty && topProducts.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(
+                    icon: _selectedCategory?.icon ??
+                        Icons.restaurant_menu_outlined,
+                    title: context.t('no_menu_items'),
+                    subtitle: context.t('store_menu_empty'),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 108),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, index) => _ProductCard(doc: gridProducts[index]),
+                      childCount: gridProducts.length,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 0.54,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -121,6 +181,7 @@ class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, {
     required String wilaya,
     required String query,
+    String? categoryId,
   }) {
     final normalizedQuery = _normalize(query);
     final normalizedWilaya = _normalize(wilaya);
@@ -132,6 +193,13 @@ class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
           productWilaya.isNotEmpty &&
           productWilaya != normalizedWilaya) {
         return false;
+      }
+      if (categoryId != null) {
+        final itemCategory = (data['storeType'] as String?) ??
+            (data['category'] as String?) ??
+            (data['type'] as String?) ??
+            'restaurant';
+        if (itemCategory != categoryId) return false;
       }
       if (normalizedQuery.isEmpty) return true;
 
@@ -151,9 +219,15 @@ class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
 
 class _MarketplaceHeader extends StatelessWidget {
   final TextEditingController search;
+  final _MarketplaceCategory? selectedCategory;
+  final ValueChanged<_MarketplaceCategory> onCategorySelected;
+  final VoidCallback? onBack;
 
   const _MarketplaceHeader({
     required this.search,
+    required this.selectedCategory,
+    required this.onCategorySelected,
+    required this.onBack,
   });
 
   @override
@@ -161,6 +235,28 @@ class _MarketplaceHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (selectedCategory != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 16, 0),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: context.t('back'),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: onBack,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    selectedCategory!.label(context),
+                    style: AppTextStyles.title2.copyWith(
+                      color: AppColors.textPrimary(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           child: SizedBox(
@@ -183,14 +279,18 @@ class _MarketplaceHeader extends StatelessWidget {
             ),
           ),
         ),
-        const _RestaurantBanners(),
+        _RestaurantBanners(categoryId: selectedCategory?.id),
+        if (selectedCategory == null)
+          _CategoryCircles(onSelected: onCategorySelected),
       ],
     );
   }
 }
 
 class _RestaurantBanners extends StatefulWidget {
-  const _RestaurantBanners();
+  final String? categoryId;
+
+  const _RestaurantBanners({this.categoryId});
 
   @override
   State<_RestaurantBanners> createState() => _RestaurantBannersState();
@@ -223,6 +323,48 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.categoryId != null) {
+      return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('app_categories')
+            .doc(widget.categoryId)
+            .snapshots(),
+        builder: (context, snap) {
+          final bannerHeight = (MediaQuery.sizeOf(context).width - 32) * 9 / 16;
+          final image = snap.data?.data()?['bannerImageBase64'] as String?;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              height: bannerHeight,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: image == null || image.isEmpty
+                    ? Container(
+                        color: AppColors.surfaceAlt(context),
+                        child: Icon(
+                          _marketplaceCategories
+                              .firstWhere(
+                                (category) => category.id == widget.categoryId,
+                              )
+                              .icon,
+                          color: AppColors.textSecondary(context),
+                          size: 40,
+                        ),
+                      )
+                    : Image.memory(
+                        base64Decode(image),
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.medium,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: AppColors.surfaceAlt(context),
+                        ),
+                      ),
+              ),
+            ),
+          );
+        },
+      );
+    }
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('app_banners')
@@ -308,10 +450,96 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
   }
 }
 
+class _CategoryCircles extends StatelessWidget {
+  final ValueChanged<_MarketplaceCategory> onSelected;
+
+  const _CategoryCircles({required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream:
+          FirebaseFirestore.instance.collection('app_categories').snapshots(),
+      builder: (context, snap) {
+        final imageById = <String, String>{};
+        final activeById = <String, bool>{};
+        for (final doc in snap.data?.docs ?? const []) {
+          final data = doc.data();
+          imageById[doc.id] = data['circleImageBase64'] as String? ?? '';
+          activeById[doc.id] = data['isActive'] as bool? ?? true;
+        }
+        final categories = _marketplaceCategories
+            .where((category) => activeById[category.id] != false)
+            .toList(growable: false);
+        if (categories.isEmpty) return const SizedBox.shrink();
+
+        return SizedBox(
+          height: 112,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              final image = imageById[category.id];
+              return InkWell(
+                borderRadius: BorderRadius.circular(50),
+                onTap: () => onSelected(category),
+                child: SizedBox(
+                  width: 78,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: category.color.withValues(alpha: 0.12),
+                          border: Border.all(
+                            color: category.color.withValues(alpha: 0.28),
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: image == null || image.isEmpty
+                            ? Icon(category.icon, color: category.color)
+                            : Image.memory(
+                                base64Decode(image),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    Icon(category.icon, color: category.color),
+                              ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        category.label(context),
+                        style: AppTextStyles.captionMedium.copyWith(
+                          color: AppColors.textPrimary(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _DeliveryPerkCard extends StatelessWidget {
   final int productsCount;
+  final _MarketplaceCategory? category;
 
-  const _DeliveryPerkCard({required this.productsCount});
+  const _DeliveryPerkCard({
+    required this.productsCount,
+    required this.category,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -321,7 +549,7 @@ class _DeliveryPerkCard extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              context.t('choose_your_order'),
+              category?.label(context) ?? context.t('choose_your_order'),
               style: AppTextStyles.title2.copyWith(
                 color: AppColors.textPrimary(context),
               ),

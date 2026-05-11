@@ -328,53 +328,27 @@ class AppRouter {
         UserRole.admin => AppRoutes.adminDashboard,
       };
 
-  static CustomTransitionPage _fade(GoRouterState state, Widget child) {
-    return CustomTransitionPage(
+  static NoTransitionPage<void> _fade(GoRouterState state, Widget child) {
+    return NoTransitionPage<void>(
       key: state.pageKey,
       child: child,
-      transitionsBuilder: (_, anim, __, child) =>
-          FadeTransition(opacity: anim, child: child),
     );
   }
 
-  static CustomTransitionPage _slide(GoRouterState state, Widget child) {
-    return CustomTransitionPage(
+  static NoTransitionPage<void> _slide(GoRouterState state, Widget child) {
+    return NoTransitionPage<void>(
       key: state.pageKey,
       child: child,
-      transitionsBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
-      ),
     );
   }
 
-  static CustomTransitionPage _fromBottomNav(
+  static NoTransitionPage<void> _fromBottomNav(
     GoRouterState state,
     Widget child,
   ) {
-    return CustomTransitionPage(
+    return NoTransitionPage<void>(
       key: state.pageKey,
-      transitionDuration: const Duration(milliseconds: 240),
-      reverseTransitionDuration: const Duration(milliseconds: 180),
       child: child,
-      transitionsBuilder: (_, anim, __, child) {
-        final curved = CurvedAnimation(
-          parent: anim,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            alignment: Alignment.bottomCenter,
-            scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
     );
   }
 }

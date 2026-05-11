@@ -94,6 +94,13 @@ class StoresScreen extends StatelessWidget {
                                 color: AppColors.textSecondary(context),
                               ),
                             ),
+                            if (store.phoneNumber.isNotEmpty)
+                              Text(
+                                store.phoneNumber,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.textSecondary(context),
+                                ),
+                              ),
                           ],
                         ),
                       ),

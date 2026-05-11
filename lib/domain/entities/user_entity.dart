@@ -4,7 +4,7 @@ enum UserRole { client, driver, store, admin }
 
 enum VehicleType { bike, car, truck }
 
-enum StoreType { restaurant, grocery, other }
+enum StoreType { restaurant, grocery, hardware, produce, other }
 
 extension UserRoleX on UserRole {
   String get name => switch (this) {
@@ -41,12 +41,16 @@ extension StoreTypeX on StoreType {
   String get name => switch (this) {
         StoreType.restaurant => 'restaurant',
         StoreType.grocery => 'grocery',
+        StoreType.hardware => 'hardware',
+        StoreType.produce => 'produce',
         StoreType.other => 'other',
       };
 
   static StoreType? fromString(String? value) => switch (value) {
         'restaurant' => StoreType.restaurant,
         'grocery' => StoreType.grocery,
+        'hardware' => StoreType.hardware,
+        'produce' => StoreType.produce,
         'other' => StoreType.other,
         _ => null,
       };
