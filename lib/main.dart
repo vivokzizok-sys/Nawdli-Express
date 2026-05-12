@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -235,18 +237,12 @@ class _IntroGateState extends State<_IntroGate> {
       color: AppColors.accentDark,
       child: SizedBox.expand(
         child: controller != null && controller.value.isInitialized
-            ? SafeArea(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: SizedBox(
-                      width: controller.value.size.width,
-                      height: controller.value.size.height,
-                      child: VideoPlayer(controller),
-                    ),
-                  ),
+            ? FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
                 ),
               )
             : const Center(
@@ -260,28 +256,32 @@ class _IntroGateState extends State<_IntroGate> {
   }
 }
 
-class _ForceUpdateGate extends StatelessWidget {
-  static const _currentVersion = '1.0.0';
-
+class _ForceUpdateGate extends StatefulWidget {
   final Widget child;
 
   const _ForceUpdateGate({required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('app_config')
-          .doc('android')
-          .snapshots(),
-      builder: (context, snap) {
-        final data = snap.data?.data();
-        final minVersion = data?['minVersion'] as String?;
-        final apkUrl = data?['apkUrl'] as String?;
-        final mustUpdate = minVersion != null &&
-            _compareVersions(_currentVersion, minVersion) < 0;
+  State<_ForceUpdateGate> createState() => _ForceUpdateGateState();
+}
 
-        if (!mustUpdate) return child;
+class _ForceUpdateGateState extends State<_ForceUpdateGate> {
+  static const _releaseApiUrl =
+      'https://api.github.com/repos/vivokzizok-sys/Nawdli-Express/releases/tags/android-latest';
+  static const _updateUrl = 'https://nawdli-express.web.app';
+  static const _currentBuildNumber =
+      int.fromEnvironment('APP_BUILD_NUMBER', defaultValue: 1);
+
+  late final Future<_UpdateCheckResult> _updateCheck = _checkForUpdate();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_UpdateCheckResult>(
+      future: _updateCheck,
+      builder: (context, snap) {
+        final result = snap.data;
+        if (result?.mustUpdate != true) return widget.child;
+
         return Material(
           color: AppColors.page(context),
           child: Center(
@@ -318,12 +318,10 @@ class _ForceUpdateGate extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     FilledButton.icon(
-                      onPressed: apkUrl == null
-                          ? null
-                          : () => launchUrl(
-                                Uri.parse(apkUrl),
-                                mode: LaunchMode.externalApplication,
-                              ),
+                      onPressed: () => launchUrl(
+                        Uri.parse(result!.updateUrl),
+                        mode: LaunchMode.externalApplication,
+                      ),
                       icon: const Icon(Icons.download_rounded),
                       label: Text(context.t('download_update')),
                     ),
@@ -337,15 +335,58 @@ class _ForceUpdateGate extends StatelessWidget {
     );
   }
 
-  int _compareVersions(String a, String b) {
-    final left = a.split('.').map((part) => int.tryParse(part) ?? 0).toList();
-    final right = b.split('.').map((part) => int.tryParse(part) ?? 0).toList();
-    final length = left.length > right.length ? left.length : right.length;
-    for (var i = 0; i < length; i++) {
-      final l = i < left.length ? left[i] : 0;
-      final r = i < right.length ? right[i] : 0;
-      if (l != r) return l.compareTo(r);
+  Future<_UpdateCheckResult> _checkForUpdate() async {
+    try {
+      final latest = await _fetchLatestRelease();
+      return _UpdateCheckResult(
+        mustUpdate: latest.buildNumber > _currentBuildNumber,
+        updateUrl: latest.updateUrl,
+      );
+    } catch (_) {
+      return const _UpdateCheckResult(mustUpdate: false, updateUrl: _updateUrl);
     }
-    return 0;
   }
+
+  Future<_LatestReleaseInfo> _fetchLatestRelease() async {
+    final client = HttpClient();
+    try {
+      final request = await client.getUrl(Uri.parse(_releaseApiUrl));
+      request.headers.set(HttpHeaders.userAgentHeader, 'Nawdli Express');
+      final response = await request.close();
+      if (response.statusCode != HttpStatus.ok) {
+        return const _LatestReleaseInfo(buildNumber: 0, updateUrl: _updateUrl);
+      }
+      final raw = await utf8.decoder.bind(response).join();
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final body = decoded['body'] as String? ?? '';
+      final buildMatch = RegExp(r'buildNumber:\s*(\d+)').firstMatch(body);
+      final urlMatch = RegExp(r'updateUrl:\s*(\S+)').firstMatch(body);
+      return _LatestReleaseInfo(
+        buildNumber: int.tryParse(buildMatch?.group(1) ?? '') ?? 0,
+        updateUrl: urlMatch?.group(1) ?? _updateUrl,
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+}
+
+class _UpdateCheckResult {
+  final bool mustUpdate;
+  final String updateUrl;
+
+  const _UpdateCheckResult({
+    required this.mustUpdate,
+    required this.updateUrl,
+  });
+}
+
+class _LatestReleaseInfo {
+  final int buildNumber;
+  final String updateUrl;
+
+  const _LatestReleaseInfo({
+    required this.buildNumber,
+    required this.updateUrl,
+  });
 }

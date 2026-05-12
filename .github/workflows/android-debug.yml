@@ -67,7 +67,7 @@ jobs:
           fi
 
       - name: Build release APKs
-        run: flutter build apk --release --split-per-abi --tree-shake-icons
+        run: flutter build apk --release --split-per-abi --tree-shake-icons --build-number ${{ github.run_number }} --dart-define=APP_BUILD_NUMBER=${{ github.run_number }}
 
       - name: Rename APKs
         run: |
@@ -113,6 +113,9 @@ jobs:
           name: Nawdli Express Android APK
           body: |
             Latest Android APK files for Nawdli Express.
+
+            buildNumber: ${{ github.run_number }}
+            updateUrl: https://nawdli-express.web.app
 
             If one APK does not install on a device, try another architecture file.
           make_latest: true

@@ -412,6 +412,12 @@ class _AccountTypePicker extends StatelessWidget {
         onTap: () => onSelected(UserRole.client, null),
       ),
       _SignupOption(
+        label: context.t('driver'),
+        icon: Icons.two_wheeler_rounded,
+        color: AppColors.driverRole,
+        onTap: () => onSelected(UserRole.driver, null),
+      ),
+      _SignupOption(
         label: context.t('restaurant'),
         icon: Icons.restaurant_outlined,
         color: AppColors.accent,
