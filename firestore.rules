@@ -23,7 +23,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isApproved() && myUser().data.role == 'admin';
+      return signedIn() && myUser().data.role == 'admin';
     }
 
     function isDriver() {
