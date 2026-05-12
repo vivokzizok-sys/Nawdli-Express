@@ -23,42 +23,61 @@ const _maxMenuItemImageBase64Chars = 900000;
 
 int _base64EncodedLength(int byteLength) => ((byteLength + 2) ~/ 3) * 4;
 
-class StoreHomeScreen extends StatelessWidget {
+class StoreHomeScreen extends StatefulWidget {
   const StoreHomeScreen({super.key});
+
+  @override
+  State<StoreHomeScreen> createState() => _StoreHomeScreenState();
+}
+
+class _StoreHomeScreenState extends State<StoreHomeScreen> {
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+    final isMenu = _selectedIndex == 1;
     return SubscriptionGate(
       user: user,
       child: Scaffold(
         backgroundColor: AppColors.page(context),
         appBar: AppBar(
-          title: const Text('Nawdli Express'),
+          title: Text(isMenu ? context.t('menu_items') : context.t('orders')),
           leading: AppMenuButton(user: user),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _showMenuItemSheet(context, user),
-          icon: const Icon(Icons.add_rounded),
-          label: Text(context.t('add_menu_item')),
-        ),
+        floatingActionButton: isMenu
+            ? FloatingActionButton.extended(
+                onPressed: () => _showMenuItemSheet(context, user),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(context.t('add_menu_item')),
+              )
+            : null,
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-          children: [
-            _StoreHeader(userName: user.fullName, phone: user.phoneNumber),
-            const SizedBox(height: 12),
-            _StoreDeliveryFeeCard(store: user),
-            const SizedBox(height: 16),
-            Text(context.t('menu_items'), style: AppTextStyles.title3),
-            const SizedBox(height: 8),
-            _MenuItemsList(storeId: user.uid),
-            const SizedBox(height: 20),
-            Text(context.t('store_orders'), style: AppTextStyles.title3),
-            const SizedBox(height: 8),
-            _StoreOrdersList(storeId: user.uid),
-          ],
+          children: isMenu
+              ? [
+                  _StoreHeader(userName: user.fullName, phone: user.phoneNumber),
+                  const SizedBox(height: 12),
+                  _StoreDeliveryFeeCard(store: user),
+                  const SizedBox(height: 16),
+                  _MenuItemsList(storeId: user.uid),
+                ]
+              : [
+                  _StoreHeader(userName: user.fullName, phone: user.phoneNumber),
+                  const SizedBox(height: 16),
+                  _StoreOrdersList(storeId: user.uid),
+                ],
         ),
-        bottomNavigationBar: const _StoreBottomBar(),
+        bottomNavigationBar: _StoreBottomBar(
+          selectedIndex: _selectedIndex,
+          onSelected: (index) {
+            if (index == 2) {
+              context.push('/settings');
+              return;
+            }
+            setState(() => _selectedIndex = index);
+          },
+        ),
       ),
     );
   }
@@ -81,7 +100,13 @@ class StoreHomeScreen extends StatelessWidget {
 }
 
 class _StoreBottomBar extends StatelessWidget {
-  const _StoreBottomBar();
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  const _StoreBottomBar({
+    required this.selectedIndex,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -91,10 +116,8 @@ class _StoreBottomBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         child: NavigationBar(
           height: 72,
-          selectedIndex: 0,
-          onDestinationSelected: (index) {
-            if (index == 2) context.push('/settings');
-          },
+          selectedIndex: selectedIndex,
+          onDestinationSelected: onSelected,
           destinations: [
             NavigationDestination(
               icon: const Icon(Icons.receipt_long_rounded),
@@ -466,6 +489,7 @@ class _MenuItemsList extends StatelessWidget {
             final data = doc.data();
             final price = (data['price'] as num?)?.toDouble() ?? 0;
             final image = data['imageBase64'] as String?;
+            final available = data['isAvailable'] as bool? ?? true;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Container(
@@ -507,6 +531,16 @@ class _MenuItemsList extends StatelessWidget {
                             data['name'] as String? ?? '',
                             style: AppTextStyles.bodyMedium,
                           ),
+                          Text(
+                            available
+                                ? context.t('available')
+                                : context.t('unavailable'),
+                            style: AppTextStyles.caption.copyWith(
+                              color: available
+                                  ? AppColors.success
+                                  : AppColors.error,
+                            ),
+                          ),
                           if ((data['description'] as String? ?? '').isNotEmpty)
                             Text(
                               data['description'] as String,
@@ -517,14 +551,26 @@ class _MenuItemsList extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Text(
-                      '${price.toStringAsFixed(0)} DA',
-                      style: AppTextStyles.captionMedium,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${price.toStringAsFixed(0)} DA',
+                          style: AppTextStyles.captionMedium,
+                        ),
+                        Switch.adaptive(
+                          value: available,
+                          onChanged: (value) => doc.reference.update({
+                            'isAvailable': value,
+                            'updatedAt': FieldValue.serverTimestamp(),
+                          }),
+                        ),
+                      ],
                     ),
                     IconButton(
                       tooltip: context.t('delete'),
                       icon: const Icon(Icons.delete_outline_rounded),
-                      onPressed: () => doc.reference.delete(),
+                      onPressed: () => _confirmDeleteMenuItem(context, doc),
                     ),
                   ],
                 ),
@@ -535,6 +581,30 @@ class _MenuItemsList extends StatelessWidget {
       },
     );
   }
+}
+
+Future<void> _confirmDeleteMenuItem(
+  BuildContext context,
+  QueryDocumentSnapshot<Map<String, dynamic>> doc,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(context.t('delete_product')),
+      content: Text(context.t('delete_product_body')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.t('cancel')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.t('delete')),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) await doc.reference.delete();
 }
 
 class _StoreOrdersList extends StatelessWidget {
@@ -555,7 +625,12 @@ class _StoreOrdersList extends StatelessWidget {
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
         }
-        if (snap.data!.docs.isEmpty) {
+        final docs = snap.data!.docs.where((doc) {
+          final hiddenBy =
+              doc.data()['hiddenByStoreIds'] as List<dynamic>? ?? const [];
+          return !hiddenBy.contains(storeId);
+        }).toList();
+        if (docs.isEmpty) {
           return EmptyState(
             icon: Icons.receipt_long_outlined,
             title: context.t('no_orders'),
@@ -563,7 +638,7 @@ class _StoreOrdersList extends StatelessWidget {
           );
         }
         return Column(
-          children: snap.data!.docs.map((doc) {
+          children: docs.map((doc) {
             final order = OrderModel.fromFirestore(doc);
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -644,6 +719,17 @@ class _StoreOrderTile extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+          if (_canHideOrder(order)) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                onPressed: () => _hideStoreOrder(context, order),
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: Text(context.t('delete_order')),
+              ),
             ),
           ],
           if (order.status == OrderStatus.storeDriverPending) ...[
@@ -739,6 +825,46 @@ class _StoreOrderTile extends StatelessWidget {
         .update({
       'status': 'rejected',
       'rejectedByStoreAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  bool _canHideOrder(OrderEntity order) {
+    return order.status == OrderStatus.delivered ||
+        order.status == OrderStatus.rejected ||
+        order.status == OrderStatus.cancelled;
+  }
+
+  Future<void> _hideStoreOrder(
+    BuildContext context,
+    OrderEntity order,
+  ) async {
+    final storeId = order.storeId;
+    if (storeId == null || storeId.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.t('delete_order')),
+        content: Text(context.t('delete_order_body')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.t('cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.t('delete')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await FirebaseFirestore.instance
+        .collection('orders')
+        .doc(order.orderId)
+        .update({
+      'hiddenByStoreIds': FieldValue.arrayUnion([storeId]),
+      'hiddenAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

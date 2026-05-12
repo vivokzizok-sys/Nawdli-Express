@@ -348,6 +348,12 @@ class AppStrings {
     'no_comments': 'No comments yet.',
     'delete_comment': 'Delete comment',
     'delete': 'Delete',
+    'delete_product': 'Delete product',
+    'delete_product_body':
+        'This product will be removed from your menu and clients cannot order it.',
+    'delete_order': 'Delete order',
+    'delete_order_body':
+        'This order will be removed from your list only. Other parties keep their own record.',
     'delete_selected': 'Delete selected',
     'select_all': 'Select all',
     'call_driver': 'Call driver',
@@ -665,6 +671,12 @@ class AppStrings {
     'client_cancelled_order':
         '\u0627\u0644\u0632\u0628\u0648\u0646 \u0623\u0644\u063a\u0649 \u0647\u0630\u0627 \u0627\u0644\u0637\u0644\u0628.',
     'delete': '\u062d\u0630\u0641',
+    'delete_product': 'حذف المنتج',
+    'delete_product_body':
+        'سيتم حذف هذا المنتج من المنيو ولن يستطيع الزبائن طلبه.',
+    'delete_order': 'حذف الطلب',
+    'delete_order_body':
+        'سيتم حذف الطلب من قائمتك فقط، وتبقى نسخة الطلب عند الأطراف الأخرى.',
     'delete_selected':
         '\u062d\u0630\u0641 \u0627\u0644\u0645\u062d\u062f\u062f',
     'select_all': '\u062a\u062d\u062f\u064a\u062f \u0627\u0644\u0643\u0644',
