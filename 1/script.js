@@ -1,5 +1,5 @@
 const githubOwner = "vivokzizok-sys";
-const githubRepo = "nawdli-express";
+const githubRepo = "Nawdli-Express";
 const releaseBaseUrl =
   `https://github.com/${githubOwner}/${githubRepo}/releases/download/android-latest`;
 
