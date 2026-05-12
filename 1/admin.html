@@ -24,7 +24,7 @@
         <label>كلمة المرور<input name="password" type="password" placeholder="••••••••" autocomplete="current-password" required></label>
         <button class="primary-button wide" type="submit">دخول</button>
       </form>
-      <div class="auth-state" data-auth-state>يجب أن يكون الحساب أدمن داخل Firestore.</div>
+      <div class="auth-state" data-auth-state>يجب أن يكون الحساب مصرحًا له بإدارة الموقع.</div>
       <a class="quiet-link" href="index.html">العودة للموقع</a>
     </section>
 
@@ -36,9 +36,9 @@
 
       <div class="admin-hero">
         <div>
-          <p class="eyebrow">بدون Firebase Storage</p>
+          <p class="eyebrow">إعدادات التحميل</p>
           <h1>إدارة روابط APK</h1>
-          <p>الحل المجاني هو GitHub Releases. اترك الروابط كما هي إذا كان GitHub Actions ينشر الملفات تلقائيًا.</p>
+          <p>تحكم في روابط نسخ التطبيق التي تظهر للزوار في صفحة التحميل.</p>
         </div>
         <div class="admin-card">
           <span>آخر إصدار</span>
@@ -51,7 +51,7 @@
         <form class="admin-panel" data-downloads-form>
           <div class="panel-head">
             <h2>روابط النسخ الثلاث</h2>
-            <p>لا ترفع APK هنا. ارفعه عبر GitHub Release أو دع GitHub Actions يرفعه تلقائيًا.</p>
+            <p>حدّث روابط النسخ عندما تريد تغيير ما يظهر في صفحة التحميل.</p>
           </div>
           <label>الإصدار<input name="version" value="1.0.0" required></label>
           <label>رابط arm64<input name="arm64Url" dir="ltr" required></label>

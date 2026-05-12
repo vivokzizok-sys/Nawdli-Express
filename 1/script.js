@@ -239,7 +239,7 @@ function setupAdminAuth() {
   if (!loginForm) return;
 
   if (!services) {
-    setAuthState("Firebase غير متاح الآن. لا يمكن فتح لوحة الأدمن.");
+    setAuthState("الخدمة غير متاحة الآن. لا يمكن فتح لوحة الأدمن.");
     return;
   }
 
@@ -313,7 +313,7 @@ function setupForms() {
     ].map((item, index) => cleanDownload(item, defaultDownloads[index]));
 
     if (items.some(item => item.url === "#")) {
-      toast("استخدم روابط APK صحيحة من GitHub Releases فقط");
+      toast("استخدم روابط APK صحيحة فقط");
       return;
     }
 
