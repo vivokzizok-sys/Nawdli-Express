@@ -17,8 +17,8 @@ class NotificationService {
 
   static const _defaultChannel = AndroidNotificationChannel(
     'nawdli_express_alerts_system_v1',
-    'Nawdli express alerts',
-    description: 'General Nawdli express notifications.',
+    'Nawdli Express alerts',
+    description: 'General Nawdli Express notifications.',
     importance: Importance.max,
     playSound: true,
     enableVibration: true,
@@ -58,7 +58,7 @@ class NotificationService {
     _fcmForegroundSub = FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
       final title =
-          notification?.title ?? message.data['title'] ?? 'Nawdli express';
+          notification?.title ?? message.data['title'] ?? 'Nawdli Express';
       final body = notification?.body ?? message.data['body'] ?? '';
       show(
         title: title,
@@ -126,7 +126,7 @@ class NotificationService {
         if (data == null) continue;
         if (data['read'] == true) continue;
 
-        final title = data['title'] as String? ?? 'Nawdli express';
+        final title = data['title'] as String? ?? 'Nawdli Express';
         final body = data['body'] as String? ?? '';
         await show(
           title: title,

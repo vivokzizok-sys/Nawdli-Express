@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Nawdli express',
+                        'Nawdli Express',
                         style: AppTextStyles.largeTitle,
                       ),
                       const SizedBox(height: 8),

@@ -26,7 +26,7 @@ class DriversScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.popOrGo('/client/home'),
         ),
-        title: const Text('Nawdli express'),
+        title: const Text('Nawdli Express'),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance

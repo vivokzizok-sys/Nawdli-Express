@@ -55,12 +55,12 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/veloce-express-release-key.jks
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/nawdli-express-release-key.jks
             {
               echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
               echo "keyPassword=$ANDROID_KEY_PASSWORD"
               echo "keyAlias=$ANDROID_KEY_ALIAS"
-              echo "storeFile=app/veloce-express-release-key.jks"
+              echo "storeFile=app/nawdli-express-release-key.jks"
             } > android/key.properties
           else
             echo "Release signing secrets are not configured. APKs will be release builds signed with the local debug fallback."
@@ -86,9 +86,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
-          name: Nawdli express Android APK
+          name: Nawdli Express Android APK
           body: |
-            Latest Android APK files for Nawdli express.
+            Latest Android APK files for Nawdli Express.
 
             If one APK does not install on a device, try another architecture file.
           make_latest: true

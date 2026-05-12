@@ -1,6 +1,6 @@
-# Nawdli express Website Frontend
+# Nawdli Express Website Frontend
 
-واجهة موقع تحميل تطبيق Nawdli express مع رابط أدمن خاص، بدون Firebase Storage.
+واجهة موقع تحميل تطبيق Nawdli Express مع رابط أدمن خاص، بدون Firebase Storage.
 
 ## الملفات
 

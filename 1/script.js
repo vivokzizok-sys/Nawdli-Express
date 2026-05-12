@@ -1,5 +1,7 @@
+const githubOwner = "vivokzizok-sys";
+const githubRepo = "nawdli-express";
 const releaseBaseUrl =
-  "https://github.com/vivokzizok-sys/veloce-express/releases/latest/download";
+  `https://github.com/${githubOwner}/${githubRepo}/releases/download/android-latest`;
 
 const defaultDownloads = [
   {
@@ -63,7 +65,7 @@ function safeApkUrl(value) {
     const allowed =
       url.protocol === "https:" &&
       url.hostname === "github.com" &&
-      url.pathname.startsWith("/vivokzizok-sys/veloce-express/releases/") &&
+      url.pathname.startsWith(`/${githubOwner}/${githubRepo}/releases/`) &&
       url.pathname.endsWith(".apk");
     return allowed ? url.toString() : "#";
   } catch (_) {
@@ -72,15 +74,17 @@ function safeApkUrl(value) {
 }
 
 function cleanDownload(item, fallback = defaultDownloads[0]) {
+  const cleanUrl = safeApkUrl(item?.url || fallback.url);
+  const source = cleanUrl === "#" ? fallback : item;
   return {
-    key: String(item?.key || fallback.key || ""),
-    title: String(item?.title || fallback.title || ""),
-    subtitle: String(item?.subtitle || fallback.subtitle || ""),
-    fileName: String(item?.fileName || fallback.fileName || ""),
-    version: String(item?.version || fallback.version || ""),
-    size: String(item?.size || fallback.size || ""),
-    date: String(item?.date || fallback.date || ""),
-    url: safeApkUrl(item?.url || fallback.url)
+    key: String(source?.key || fallback.key || ""),
+    title: String(source?.title || fallback.title || ""),
+    subtitle: String(source?.subtitle || fallback.subtitle || ""),
+    fileName: String(source?.fileName || fallback.fileName || ""),
+    version: String(source?.version || fallback.version || ""),
+    size: String(source?.size || fallback.size || ""),
+    date: String(source?.date || fallback.date || ""),
+    url: cleanUrl === "#" ? fallback.url : cleanUrl
   };
 }
 

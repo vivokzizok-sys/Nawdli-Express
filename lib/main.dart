@@ -140,7 +140,7 @@ class _NawdliExpressAppState extends State<NawdliExpressApp> {
           animation: _settingsController,
           builder: (context, _) {
             return MaterialApp.router(
-              title: 'Nawdli express',
+              title: 'Nawdli Express',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
@@ -178,7 +178,7 @@ class _IntroGate extends StatefulWidget {
 }
 
 class _IntroGateState extends State<_IntroGate> {
-  static const _introDuration = Duration(seconds: 2);
+  static const _fallbackIntroDuration = Duration(seconds: 4);
 
   VideoPlayerController? _controller;
   Timer? _fallbackTimer;
@@ -197,13 +197,19 @@ class _IntroGateState extends State<_IntroGate> {
       await controller.initialize();
       await controller.setLooping(false);
       await controller.play();
-      _fallbackTimer = Timer(_introDuration, _finish);
+      final videoDuration = controller.value.duration;
+      _fallbackTimer = Timer(
+        videoDuration > Duration.zero
+            ? videoDuration + const Duration(milliseconds: 300)
+            : _fallbackIntroDuration,
+        _finish,
+      );
       controller.addListener(() {
         if (controller.value.isCompleted) _finish();
       });
       if (mounted) setState(() {});
     } catch (_) {
-      _fallbackTimer = Timer(_introDuration, _finish);
+      _fallbackTimer = Timer(_fallbackIntroDuration, _finish);
     }
   }
 
@@ -237,7 +243,7 @@ class _IntroGateState extends State<_IntroGate> {
               )
             : const Center(
                 child: Text(
-                  'Nawdli express',
+                  'Nawdli Express',
                   style: AppTextStyles.largeTitle,
                 ),
               ),

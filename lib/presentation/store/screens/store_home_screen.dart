@@ -34,7 +34,7 @@ class StoreHomeScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.page(context),
         appBar: AppBar(
-          title: const Text('Nawdli express'),
+          title: const Text('Nawdli Express'),
           leading: AppMenuButton(user: user),
         ),
         floatingActionButton: FloatingActionButton.extended(

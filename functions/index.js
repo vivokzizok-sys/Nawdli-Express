@@ -115,7 +115,7 @@ exports.sendNotification = onCall(async (request) => {
       android: {
         priority: "high",
         notification: {
-          channelId: "veloce_express_alerts_system_v1",
+          channelId: "nawdli_express_alerts_system_v1",
           sound: "default",
         },
       },
