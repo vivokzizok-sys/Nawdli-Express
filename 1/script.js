@@ -1,4 +1,5 @@
-const releaseBaseUrl = "https://github.com/vivokzizok-sys/veloce-express/releases/latest/download";
+const releaseBaseUrl =
+  "https://github.com/vivokzizok-sys/veloce-express/releases/latest/download";
 
 const defaultDownloads = [
   {
@@ -40,21 +41,64 @@ const firebaseConfig = {
   messagingSenderId: "391374475758"
 };
 
-const downloadsStorageKey = "veloce_downloads_preview";
+const downloadsStorageKey = "nawdli_downloads_preview";
 let firebaseServices = null;
 let currentAdmin = null;
 let remoteDownloads = null;
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function safeApkUrl(value) {
+  const raw = String(value ?? "").trim();
+  if (/^public\/[A-Za-z0-9._/-]+\.apk$/.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    const allowed =
+      url.protocol === "https:" &&
+      url.hostname === "github.com" &&
+      url.pathname.startsWith("/vivokzizok-sys/veloce-express/releases/") &&
+      url.pathname.endsWith(".apk");
+    return allowed ? url.toString() : "#";
+  } catch (_) {
+    return "#";
+  }
+}
+
+function cleanDownload(item, fallback = defaultDownloads[0]) {
+  return {
+    key: String(item?.key || fallback.key || ""),
+    title: String(item?.title || fallback.title || ""),
+    subtitle: String(item?.subtitle || fallback.subtitle || ""),
+    fileName: String(item?.fileName || fallback.fileName || ""),
+    version: String(item?.version || fallback.version || ""),
+    size: String(item?.size || fallback.size || ""),
+    date: String(item?.date || fallback.date || ""),
+    url: safeApkUrl(item?.url || fallback.url)
+  };
+}
+
 function localDownloads() {
   try {
-    return JSON.parse(localStorage.getItem(downloadsStorageKey)) || defaultDownloads;
+    const parsed = JSON.parse(localStorage.getItem(downloadsStorageKey));
+    return Array.isArray(parsed) ? parsed : defaultDownloads;
   } catch (_) {
     return defaultDownloads;
   }
 }
 
 function getDownloads() {
-  return remoteDownloads && remoteDownloads.length ? remoteDownloads : localDownloads();
+  const source =
+    remoteDownloads && remoteDownloads.length ? remoteDownloads : localDownloads();
+  return source
+    .slice(0, 3)
+    .map((item, index) => cleanDownload(item, defaultDownloads[index]));
 }
 
 function latestDownload() {
@@ -91,14 +135,16 @@ async function loadRemoteDownloads() {
 }
 
 function downloadCard(item, index) {
+  const safe = cleanDownload(item, defaultDownloads[index]);
+  const label = index === 0 ? "تحميل موصى به" : "تحميل بديل";
   return `
     <article class="version-card reveal">
       <div>
-        <h3>${item.title}</h3>
-        <span>${item.fileName}</span>
+        <h3>${escapeHtml(safe.title)}</h3>
+        <span>${escapeHtml(safe.fileName)}</span>
       </div>
-      <p>${item.subtitle}<br>الإصدار ${item.version} - الحجم ${item.size}</p>
-      <a class="tag" href="${item.url}" download>${index === 0 ? "تحميل موصى به" : "تحميل بديل"}</a>
+      <p>${escapeHtml(safe.subtitle)}<br>الإصدار ${escapeHtml(safe.version)} - الحجم ${escapeHtml(safe.size)}</p>
+      <a class="tag" href="${safe.url}" rel="noopener" download>${label}</a>
     </article>
   `;
 }
@@ -118,15 +164,15 @@ function renderCurrentRelease() {
   const sizeLabel = document.querySelector("[data-size-label]");
   if (strip) {
     strip.innerHTML = `
-      <span>الإصدار ${latest.version}</span>
-      <span>الحجم ${latest.size}</span>
+      <span>الإصدار ${escapeHtml(latest.version)}</span>
+      <span>الحجم ${escapeHtml(latest.size)}</span>
       <span>3 ملفات APK احتياطية</span>
     `;
   }
   if (versionLabel) versionLabel.textContent = latest.version;
   if (sizeLabel) sizeLabel.textContent = latest.size;
   document.querySelectorAll("[data-download-link]").forEach(link => {
-    link.href = latest.url;
+    link.href = safeApkUrl(latest.url);
   });
 }
 
@@ -157,7 +203,7 @@ function renderAll() {
 
 async function assertAdmin(user) {
   const services = initFirebase();
-  if (!services || !user) return false;
+  if (!services || !user || !user.emailVerified) return false;
   const doc = await services.db.collection("users").doc(user.uid).get();
   return doc.exists && doc.data().role === "admin";
 }
@@ -205,7 +251,7 @@ function setupAdminAuth() {
       const allowed = await assertAdmin(user);
       if (!allowed) {
         await services.auth.signOut();
-        setAuthState("هذا الحساب ليس أدمن داخل Firestore.");
+        setAuthState("هذا الحساب ليس أدمن أو البريد غير مؤكد.");
         return;
       }
       currentAdmin = user;
@@ -221,7 +267,10 @@ function setupAdminAuth() {
     event.preventDefault();
     const form = new FormData(loginForm);
     try {
-      await services.auth.signInWithEmailAndPassword(form.get("email"), form.get("password"));
+      await services.auth.signInWithEmailAndPassword(
+        form.get("email"),
+        form.get("password")
+      );
       loginForm.reset();
     } catch (error) {
       setAuthState(`فشل تسجيل الدخول: ${error.message}`);
@@ -237,12 +286,33 @@ function setupForms() {
   form.addEventListener("submit", async event => {
     event.preventDefault();
     const data = new FormData(form);
-    const version = data.get("version");
+    const version = String(data.get("version") || "").trim().slice(0, 32);
     const items = [
-      { ...defaultDownloads[0], version, url: data.get("arm64Url"), size: data.get("arm64Size") },
-      { ...defaultDownloads[1], version, url: data.get("armv7Url"), size: data.get("armv7Size") },
-      { ...defaultDownloads[2], version, url: data.get("x64Url"), size: data.get("x64Size") }
-    ];
+      {
+        ...defaultDownloads[0],
+        version,
+        url: data.get("arm64Url"),
+        size: String(data.get("arm64Size") || "").slice(0, 32)
+      },
+      {
+        ...defaultDownloads[1],
+        version,
+        url: data.get("armv7Url"),
+        size: String(data.get("armv7Size") || "").slice(0, 32)
+      },
+      {
+        ...defaultDownloads[2],
+        version,
+        url: data.get("x64Url"),
+        size: String(data.get("x64Size") || "").slice(0, 32)
+      }
+    ].map((item, index) => cleanDownload(item, defaultDownloads[index]));
+
+    if (items.some(item => item.url === "#")) {
+      toast("استخدم روابط APK صحيحة من GitHub Releases فقط");
+      return;
+    }
+
     const services = initFirebase();
     if (services && currentAdmin) {
       try {

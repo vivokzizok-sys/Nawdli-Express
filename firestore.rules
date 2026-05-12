@@ -23,7 +23,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() && myUser().data.role == 'admin';
+      return isVerified() && myUser().data.role == 'admin';
     }
 
     function isDriver() {
@@ -45,6 +45,35 @@ service cloud.firestore {
           order.data.clientId == request.auth.uid
           || order.data.driverId == request.auth.uid
           || order.data.storeId == request.auth.uid
+        );
+    }
+
+    function validText(value, maxLength) {
+      return value is string
+        && value.size() > 0
+        && value.size() <= maxLength;
+    }
+
+    function validNotificationCreate() {
+      return request.resource.data.keys().hasOnly([
+          'userId',
+          'orderId',
+          'type',
+          'title',
+          'body',
+          'createdBy',
+          'read',
+          'createdAt'
+        ])
+        && request.resource.data.userId is string
+        && validText(request.resource.data.type, 80)
+        && validText(request.resource.data.title, 140)
+        && validText(request.resource.data.body, 800)
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time
+        && (
+          !request.resource.data.keys().hasAny(['orderId'])
+          || request.resource.data.orderId is string
         );
     }
 
@@ -318,11 +347,22 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow create: if isApproved();
+      allow create: if validNotificationCreate()
+        && (
+          (
+            isApproved()
+            && request.resource.data.createdBy == request.auth.uid
+          )
+          || (
+            isAdmin()
+            && request.resource.data.createdBy in ['admin', request.auth.uid]
+          )
+        );
       allow read: if isApproved()
         && resource.data.userId == request.auth.uid;
       allow update: if isApproved()
         && resource.data.userId == request.auth.uid
+        && request.resource.data.read == true
         && request.resource.data.diff(resource.data)
           .affectedKeys()
           .hasOnly(['read', 'readAt']);
@@ -333,7 +373,23 @@ service cloud.firestore {
       allow create: if isApproved()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'open'
-        && request.resource.data.type in ['support', 'report', 'payment'];
+        && request.resource.data.type in ['support', 'report', 'payment']
+        && request.resource.data.keys().hasOnly([
+          'type',
+          'status',
+          'createdBy',
+          'createdByName',
+          'createdByEmail',
+          'createdByRole',
+          'orderId',
+          'reportedUserId',
+          'message',
+          'createdAt',
+          'updatedAt'
+        ])
+        && validText(request.resource.data.message, 1200)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
 
       allow read: if isAdmin()
         || (isApproved() && resource.data.createdBy == request.auth.uid);
@@ -356,7 +412,17 @@ service cloud.firestore {
     match /driver_call_logs/{logId} {
       allow create: if isClient()
         && request.resource.data.clientId == request.auth.uid
-        && request.resource.data.driverId is string;
+        && request.resource.data.driverId is string
+        && request.resource.data.keys().hasOnly([
+          'driverId',
+          'driverName',
+          'driverPhone',
+          'clientId',
+          'clientName',
+          'clientPhone',
+          'createdAt'
+        ])
+        && request.resource.data.createdAt == request.time;
       allow read: if isAdmin()
         || (isDriver() && resource.data.driverId == request.auth.uid);
       allow update, delete: if isAdmin();
@@ -365,7 +431,17 @@ service cloud.firestore {
     match /store_call_logs/{logId} {
       allow create: if isClient()
         && request.resource.data.clientId == request.auth.uid
-        && request.resource.data.storeId is string;
+        && request.resource.data.storeId is string
+        && request.resource.data.keys().hasOnly([
+          'storeId',
+          'storeName',
+          'storePhone',
+          'clientId',
+          'clientName',
+          'clientPhone',
+          'createdAt'
+        ])
+        && request.resource.data.createdAt == request.time;
       allow read: if isAdmin()
         || (isStore() && resource.data.storeId == request.auth.uid);
       allow update, delete: if isAdmin();
@@ -376,14 +452,28 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    match /app_releases/{releaseId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
     match /site_config/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin()
+        && configId in ['downloads', 'main']
+        && request.resource.data.keys().hasOnly([
+          'items',
+          'appName',
+          'supportUrl',
+          'brandColor',
+          'securityText',
+          'updatedBy',
+          'updatedAt'
+        ])
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && (
+          configId != 'downloads'
+          || (
+            request.resource.data.items is list
+            && request.resource.data.items.size() == 3
+          )
+        );
     }
 
     match /subscription_payments/{paymentId} {

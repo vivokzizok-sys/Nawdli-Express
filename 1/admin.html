@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#d60000">
+  <meta name="robots" content="noindex,nofollow,noarchive">
   <title>Nawdli express | دخول الأدمن</title>
   <link rel="icon" type="image/png" href="public/app-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,8 +20,8 @@
       <h1>دخول الأدمن</h1>
       <p>هذا الرابط غير ظاهر للزوار. سجل الدخول لتعديل روابط نسخ APK ومعلومات الموقع.</p>
       <form class="login-form glass-form" data-login-form>
-        <label>الجيميل<input name="email" type="email" placeholder="admin@gmail.com" required></label>
-        <label>كلمة المرور<input name="password" type="password" placeholder="••••••••" required></label>
+        <label>الجيميل<input name="email" type="email" placeholder="admin@gmail.com" autocomplete="username" required></label>
+        <label>كلمة المرور<input name="password" type="password" placeholder="••••••••" autocomplete="current-password" required></label>
         <button class="primary-button wide" type="submit">دخول</button>
       </form>
       <div class="auth-state" data-auth-state>يجب أن يكون الحساب أدمن داخل Firestore.</div>
