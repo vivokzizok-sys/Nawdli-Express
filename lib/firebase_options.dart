@@ -18,7 +18,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAvxTNotYH6Eibgj7bQgVF6kQCccjOUpHc',
-    appId: '1:391374475758:android:de697a7b790fe1f7c0feff',
+    appId: '1:391374475758:android:eb8e02eeb6208a4dc0feff',
     messagingSenderId: '391374475758',
     projectId: 'veloce-express',
     databaseURL:

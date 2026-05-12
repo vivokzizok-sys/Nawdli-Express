@@ -16,7 +16,7 @@ class NotificationService {
         _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static const _defaultChannel = AndroidNotificationChannel(
-    'veloce_express_alerts_system_v1',
+    'nawdli_express_alerts_system_v1',
     'Nawdli express alerts',
     description: 'General Nawdli express notifications.',
     importance: Importance.max,

@@ -1,4 +1,4 @@
-package com.example.veloce_express
+package com.nawdli.express
 
 import io.flutter.embedding.android.FlutterActivity
 

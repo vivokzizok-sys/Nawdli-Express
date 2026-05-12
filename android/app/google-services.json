@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:391374475758:android:de697a7b790fe1f7c0feff",
+        "mobilesdk_app_id": "1:391374475758:android:eb8e02eeb6208a4dc0feff",
         "android_client_info": {
-          "package_name": "com.example.veloce_express"
+          "package_name": "com.nawdli.express"
         }
       },
       "oauth_client": [

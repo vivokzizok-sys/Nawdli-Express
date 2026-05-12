@@ -11,6 +11,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
+    "site": "nawdli-express",
     "public": "1",
     "cleanUrls": true,
     "headers": [
