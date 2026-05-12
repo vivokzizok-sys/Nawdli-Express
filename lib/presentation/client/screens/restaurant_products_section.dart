@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,15 @@ const _marketplaceCategories = [
     color: AppColors.info,
   ),
 ];
+
+Uint8List? _decodeBase64Image(String? value) {
+  if (value == null || value.isEmpty) return null;
+  try {
+    return base64Decode(value);
+  } on FormatException {
+    return null;
+  }
+}
 
 class _RestaurantProductsSectionState extends State<RestaurantProductsSection> {
   final _search = TextEditingController();
@@ -332,13 +342,14 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
         builder: (context, snap) {
           final bannerHeight = (MediaQuery.sizeOf(context).width - 32) * 9 / 16;
           final image = snap.data?.data()?['bannerImageBase64'] as String?;
+          final imageBytes = _decodeBase64Image(image);
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
               height: bannerHeight,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: image == null || image.isEmpty
+                child: imageBytes == null
                     ? Container(
                         color: AppColors.surfaceAlt(context),
                         child: Icon(
@@ -352,7 +363,7 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
                         ),
                       )
                     : Image.memory(
-                        base64Decode(image),
+                        imageBytes,
                         fit: BoxFit.cover,
                         filterQuality: FilterQuality.medium,
                         errorBuilder: (_, __, ___) => Container(
@@ -398,10 +409,11 @@ class _RestaurantBannersState extends State<_RestaurantBanners> {
                     itemBuilder: (context, index) {
                       final data = banners[index % banners.length].data();
                       final image = data['imageBase64'] as String? ?? '';
-                      return image.isEmpty
+                      final imageBytes = _decodeBase64Image(image);
+                      return imageBytes == null
                           ? Container(color: AppColors.surfaceAlt(context))
                           : Image.memory(
-                              base64Decode(image),
+                              imageBytes,
                               fit: BoxFit.cover,
                               filterQuality: FilterQuality.medium,
                               errorBuilder: (_, __, ___) => Container(
@@ -483,6 +495,7 @@ class _CategoryCircles extends StatelessWidget {
             itemBuilder: (context, index) {
               final category = categories[index];
               final image = imageById[category.id];
+              final imageBytes = _decodeBase64Image(image);
               return InkWell(
                 borderRadius: BorderRadius.circular(50),
                 onTap: () => onSelected(category),
@@ -501,10 +514,10 @@ class _CategoryCircles extends StatelessWidget {
                           ),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: image == null || image.isEmpty
+                        child: imageBytes == null
                             ? Icon(category.icon, color: category.color)
                             : Image.memory(
-                                base64Decode(image),
+                                imageBytes,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) =>
                                     Icon(category.icon, color: category.color),

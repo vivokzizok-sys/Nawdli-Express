@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1475,6 +1476,19 @@ const _adminCategoryAssets = [
   _AdminCategoryAsset('produce', Icons.eco_outlined, AppColors.info),
 ];
 
+const _maxCategoryDocumentBase64Chars = 900000;
+
+int _base64EncodedLength(int byteLength) => ((byteLength + 2) ~/ 3) * 4;
+
+Uint8List? _decodeBase64Image(String value) {
+  if (value.isEmpty) return null;
+  try {
+    return base64Decode(value);
+  } on FormatException {
+    return null;
+  }
+}
+
 class _BannersTab extends StatefulWidget {
   final FirebaseFirestore db;
 
@@ -1760,13 +1774,13 @@ class _BannersTabState extends State<_BannersTab> {
   Future<void> _addBanner() async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70,
-      maxWidth: 1280,
-      maxHeight: 720,
+      imageQuality: 55,
+      maxWidth: 900,
+      maxHeight: 506,
     );
     if (picked == null) return;
     final bytes = await picked.readAsBytes();
-    if (bytes.length > 750 * 1024) {
+    if (_base64EncodedLength(bytes.length) > _maxCategoryDocumentBase64Chars) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.t('image_too_large'))),
@@ -1782,6 +1796,15 @@ class _BannersTabState extends State<_BannersTab> {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('image_saved'))),
+      );
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? e.code)),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1793,15 +1816,16 @@ class _BannersTabState extends State<_BannersTab> {
     required int maxWidth,
     required int maxHeight,
   }) async {
+    final isCircle = field == 'circleImageBase64';
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70,
+      imageQuality: isCircle ? 42 : 45,
       maxWidth: maxWidth.toDouble(),
       maxHeight: maxHeight.toDouble(),
     );
     if (picked == null) return;
     final bytes = await picked.readAsBytes();
-    if (bytes.length > 750 * 1024) {
+    if (_base64EncodedLength(bytes.length) > _maxCategoryDocumentBase64Chars) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.t('image_too_large'))),
@@ -1811,13 +1835,41 @@ class _BannersTabState extends State<_BannersTab> {
     final uploadKey = '$categoryId-$field';
     setState(() => _categoryUploadKey = uploadKey);
     try {
-      await widget.db.collection('app_categories').doc(categoryId).set({
-        field: base64Encode(bytes),
+      final encoded = base64Encode(bytes);
+      final categoryRef =
+          widget.db.collection('app_categories').doc(categoryId);
+      final existing = await categoryRef.get();
+      final existingData = existing.data();
+      final otherField = field == 'circleImageBase64'
+          ? 'bannerImageBase64'
+          : 'circleImageBase64';
+      final otherImage = existingData?[otherField] as String? ?? '';
+
+      if (encoded.length + otherImage.length >
+          _maxCategoryDocumentBase64Chars) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.t('image_too_large'))),
+        );
+        return;
+      }
+
+      await categoryRef.set({
+        field: encoded,
         'isActive': true,
         'sortOrder': _adminCategoryAssets
             .indexWhere((category) => category.id == categoryId),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('image_saved'))),
+      );
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? e.code)),
+      );
     } finally {
       if (mounted) setState(() => _categoryUploadKey = null);
     }
@@ -1836,14 +1888,14 @@ class _BannersTabState extends State<_BannersTab> {
           onUploadCircle: (categoryId) => _setCategoryImage(
             categoryId: categoryId,
             field: 'circleImageBase64',
-            maxWidth: 600,
-            maxHeight: 600,
+            maxWidth: 280,
+            maxHeight: 280,
           ),
           onUploadBanner: (categoryId) => _setCategoryImage(
             categoryId: categoryId,
             field: 'bannerImageBase64',
-            maxWidth: 1280,
-            maxHeight: 720,
+            maxWidth: 800,
+            maxHeight: 450,
           ),
         ),
         const SizedBox(height: 22),
@@ -1877,6 +1929,7 @@ class _BannersTabState extends State<_BannersTab> {
               children: snap.data!.docs.map((doc) {
                 final data = doc.data();
                 final image = data['imageBase64'] as String? ?? '';
+                final imageBytes = _decodeBase64Image(image);
                 final active = data['isActive'] as bool? ?? true;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -1890,10 +1943,10 @@ class _BannersTabState extends State<_BannersTab> {
                     children: [
                       AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: image.isEmpty
+                        child: imageBytes == null
                             ? Container(color: AppColors.surfaceAlt(context))
                             : Image.memory(
-                                base64Decode(image),
+                                imageBytes,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   color: AppColors.surfaceAlt(context),
@@ -1953,6 +2006,8 @@ class _CategoryAssetsEditor extends StatelessWidget {
             final data = docs[category.id] ?? const <String, dynamic>{};
             final circle = data['circleImageBase64'] as String? ?? '';
             final banner = data['bannerImageBase64'] as String? ?? '';
+            final circleBytes = _decodeBase64Image(circle);
+            final bannerBytes = _decodeBase64Image(banner);
             final active = data['isActive'] as bool? ?? true;
             final circleKey = '${category.id}-circleImageBase64';
             final bannerKey = '${category.id}-bannerImageBase64';
@@ -1972,10 +2027,10 @@ class _CategoryAssetsEditor extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         backgroundColor: category.color.withValues(alpha: 0.12),
-                        backgroundImage: circle.isEmpty
+                        backgroundImage: circleBytes == null
                             ? null
-                            : MemoryImage(base64Decode(circle)),
-                        child: circle.isEmpty
+                            : MemoryImage(circleBytes),
+                        child: circleBytes == null
                             ? Icon(category.icon, color: category.color)
                             : null,
                       ),
@@ -2012,14 +2067,21 @@ class _CategoryAssetsEditor extends StatelessWidget {
                                 color: AppColors.textSecondary(context),
                               ),
                             )
-                          : Image.memory(
-                              base64Decode(banner),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: AppColors.surfaceAlt(context),
-                                child: const Icon(Icons.broken_image_outlined),
-                              ),
-                            ),
+                          : bannerBytes == null
+                              ? Container(
+                                  color: AppColors.surfaceAlt(context),
+                                  child:
+                                      const Icon(Icons.broken_image_outlined),
+                                )
+                              : Image.memory(
+                                  bannerBytes,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: AppColors.surfaceAlt(context),
+                                    child:
+                                        const Icon(Icons.broken_image_outlined),
+                                  ),
+                                ),
                     ),
                   ),
                   const SizedBox(height: 12),

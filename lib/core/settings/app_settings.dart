@@ -153,6 +153,10 @@ class AppStrings {
     'sign_in_subtitle': 'Sign in to manage deliveries and bids.',
     'sign_in': 'Sign In',
     'create_account': 'Create account',
+    'choose_account_type': 'Choose account type',
+    'choose_account_type_body':
+        'Select how you will use Veloce Express, then complete your account.',
+    'change': 'Change',
     'already_have_account': 'I already have an account',
     'client': 'Client',
     'driver': 'Driver',
@@ -160,8 +164,8 @@ class AppStrings {
     'store_type': 'Store type',
     'restaurant': 'Restaurant',
     'grocery': 'Grocery',
-    'hardware': 'Home supplies',
-    'produce': 'Fruit and vegetables',
+    'hardware': 'Hardware',
+    'produce': 'Vegetables',
     'categories': 'Categories',
     'category_circle': 'Circle image',
     'category_banner': '16:9 banner',
@@ -352,6 +356,7 @@ class AppStrings {
         'A new version is required to continue using Veloce Express.',
     'download_update': 'Download update',
     'image_too_large': 'Image is too large. Choose a smaller photo.',
+    'image_saved': 'Image saved.',
     'wilaya': 'Wilaya',
     'commune': 'Commune',
     'write_clear_value': 'Write a clear value',
@@ -479,6 +484,10 @@ class AppStrings {
     'sign_in_subtitle': 'سجل الدخول لإدارة الطلبات والعروض.',
     'sign_in': 'تسجيل الدخول',
     'create_account': 'إنشاء حساب',
+    'choose_account_type': 'اختر نوع الحساب',
+    'choose_account_type_body':
+        'اختر كيف ستستعمل Veloce Express ثم أكمل إنشاء الحساب.',
+    'change': 'تغيير',
     'already_have_account': 'لدي حساب بالفعل',
     'client': 'زبون',
     'driver': 'سائق',
@@ -622,6 +631,7 @@ class AppStrings {
         '\u062d\u0630\u0641 \u0627\u0644\u062a\u0639\u0644\u064a\u0642',
     'image_too_large':
         '\u0627\u0644\u0635\u0648\u0631\u0629 \u0643\u0628\u064a\u0631\u0629. \u0627\u062e\u062a\u0631 \u0635\u0648\u0631\u0629 \u0623\u0635\u063a\u0631.',
+    'image_saved': 'تم حفظ الصورة.',
     'client_rejected_price':
         '\u0627\u0644\u0632\u0628\u0648\u0646 \u0631\u0641\u0636 \u0633\u0639\u0631\u0643. \u064a\u0645\u0643\u0646\u0643 \u0625\u0631\u0633\u0627\u0644 \u0633\u0639\u0631 \u062c\u062f\u064a\u062f.',
     'new_delivery_price':
@@ -644,10 +654,9 @@ class AppStrings {
     'store': '\u0645\u062d\u0644',
     'store_type': '\u0646\u0648\u0639 \u0627\u0644\u0645\u062d\u0644',
     'restaurant': '\u0645\u0637\u0639\u0645',
-    'grocery': '\u0645\u0648\u0627\u062f \u063a\u0630\u0627\u0626\u064a\u0629',
-    'hardware':
-        '\u0643\u0646\u0643\u0627\u0631\u064a \u0648\u0644\u0648\u0627\u0632\u0645 \u0627\u0644\u0645\u0646\u0627\u0632\u0644',
-    'produce': '\u062e\u0636\u0631 \u0648\u0641\u0648\u0627\u0643\u0647',
+    'grocery': '\u0628\u0642\u0627\u0644\u0629',
+    'hardware': '\u0643\u0646\u0643\u0627\u0631\u064a',
+    'produce': '\u062e\u0636\u0627\u0631',
     'categories': '\u0627\u0644\u062a\u0635\u0646\u064a\u0641\u0627\u062a',
     'category_circle':
         '\u0635\u0648\u0631\u0629 \u0627\u0644\u062f\u0627\u0626\u0631\u0629',
