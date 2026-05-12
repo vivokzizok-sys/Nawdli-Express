@@ -7,11 +7,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/admob_config.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/order_model.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../order/bloc/order_bloc.dart';
+import '../../shared/widgets/admob_banner.dart';
 import '../../shared/widgets/app_menu_button.dart';
 import 'restaurant_products_section.dart';
 
@@ -31,6 +33,7 @@ class ClientHomeScreen extends StatelessWidget {
       body: Column(
         children: [
           _ClientActiveTripBanner(clientId: user.uid),
+          const AdMobBanner(placement: AdMobPlacement.clientHome),
           const Expanded(child: RestaurantProductsSection()),
         ],
       ),

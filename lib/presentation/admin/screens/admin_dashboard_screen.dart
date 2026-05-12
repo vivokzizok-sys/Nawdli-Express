@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/admob_config.dart';
 import '../../../core/services/push_notification_sender.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/utils/currency.dart';
@@ -30,7 +31,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 7, vsync: this);
+    _tabCtrl = TabController(length: 8, vsync: this);
   }
 
   @override
@@ -81,6 +82,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Tab(text: context.t('tickets')),
             Tab(text: context.t('banners')),
             Tab(text: context.t('call_logs')),
+            Tab(text: context.t('admob')),
             Tab(text: context.t('payments')),
           ],
         ),
@@ -94,6 +96,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           _TicketsTab(db: _db),
           _BannersTab(db: _db),
           _CallsTab(db: _db),
+          _AdsSettingsTab(db: _db),
           _PaymentsTab(db: _db),
         ],
       ),
@@ -1338,6 +1341,162 @@ class _BannersTab extends StatefulWidget {
 
   @override
   State<_BannersTab> createState() => _BannersTabState();
+}
+
+class _AdsSettingsTab extends StatefulWidget {
+  final FirebaseFirestore db;
+
+  const _AdsSettingsTab({required this.db});
+
+  @override
+  State<_AdsSettingsTab> createState() => _AdsSettingsTabState();
+}
+
+class _AdsSettingsTabState extends State<_AdsSettingsTab> {
+  final _bannerUnitId =
+      TextEditingController(text: AdMobConfig.productionBannerUnitId);
+  bool _loaded = false;
+  bool _saving = false;
+  bool _enabled = true;
+  bool _bannerEnabled = true;
+  bool _testMode = false;
+  bool _clientHome = true;
+  bool _stores = true;
+  bool _drivers = true;
+
+  @override
+  void dispose() {
+    _bannerUnitId.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final unitId = _bannerUnitId.text.trim();
+    if (unitId.isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      await widget.db.collection('app_config').doc('ads').set({
+        'enabled': _enabled,
+        'bannerEnabled': _bannerEnabled,
+        'testMode': _testMode,
+        'bannerUnitId': unitId,
+        'placements': {
+          AdMobPlacement.clientHome: _clientHome,
+          AdMobPlacement.stores: _stores,
+          AdMobPlacement.drivers: _drivers,
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('admob_saved'))),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: widget.db.collection('app_config').doc('ads').snapshots(),
+      builder: (context, snap) {
+        final data = snap.data?.data() ?? const <String, dynamic>{};
+        if (!_loaded && snap.connectionState != ConnectionState.waiting) {
+          final placements =
+              data['placements'] as Map<String, dynamic>? ?? const {};
+          _enabled = data['enabled'] as bool? ?? true;
+          _bannerEnabled = data['bannerEnabled'] as bool? ?? true;
+          _testMode = data['testMode'] as bool? ?? false;
+          _bannerUnitId.text =
+              (data['bannerUnitId'] as String?)?.trim().isNotEmpty == true
+                  ? (data['bannerUnitId'] as String).trim()
+                  : AdMobConfig.productionBannerUnitId;
+          _clientHome = placements[AdMobPlacement.clientHome] as bool? ?? true;
+          _stores = placements[AdMobPlacement.stores] as bool? ?? true;
+          _drivers = placements[AdMobPlacement.drivers] as bool? ?? true;
+          _loaded = true;
+        }
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(context.t('admob_settings'),
+                      style: AppTextStyles.title3),
+                  const SizedBox(height: 12),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: _enabled,
+                    title: Text(context.t('admob_enabled')),
+                    onChanged: (value) => setState(() => _enabled = value),
+                  ),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: _bannerEnabled,
+                    title: Text(context.t('admob_banner_enabled')),
+                    onChanged: (value) =>
+                        setState(() => _bannerEnabled = value),
+                  ),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: _testMode,
+                    title: Text(context.t('admob_test_mode')),
+                    onChanged: (value) => setState(() => _testMode = value),
+                  ),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    controller: _bannerUnitId,
+                    hint: context.t('admob_banner_unit_id'),
+                    keyboardType: TextInputType.text,
+                  ),
+                  const SizedBox(height: 18),
+                  Text(context.t('admob_placements'),
+                      style: AppTextStyles.captionMedium),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _clientHome,
+                    title: Text(context.t('admob_client_home')),
+                    onChanged: (value) =>
+                        setState(() => _clientHome = value ?? false),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _stores,
+                    title: Text(context.t('admob_stores')),
+                    onChanged: (value) =>
+                        setState(() => _stores = value ?? false),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _drivers,
+                    title: Text(context.t('admob_drivers')),
+                    onChanged: (value) =>
+                        setState(() => _drivers = value ?? false),
+                  ),
+                  const SizedBox(height: 12),
+                  PrimaryButton(
+                    label: context.t('save_changes'),
+                    isLoading: _saving,
+                    onPressed: _save,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _PaymentsTab extends StatelessWidget {

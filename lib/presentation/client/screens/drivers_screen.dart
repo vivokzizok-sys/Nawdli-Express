@@ -8,9 +8,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_navigation.dart';
+import '../../../core/services/admob_config.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../data/models/user_model.dart';
 import '../../../domain/entities/user_entity.dart';
+import '../../shared/widgets/admob_banner.dart';
 import '../../shared/widgets/shared_widgets.dart';
 
 class DriversScreen extends StatelessWidget {
@@ -28,36 +30,44 @@ class DriversScreen extends StatelessWidget {
         ),
         title: const Text('Nawdli Express'),
       ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .where('role', isEqualTo: 'driver')
-            .where('isApproved', isEqualTo: true)
-            .limit(100)
-            .snapshots(),
-        builder: (context, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final drivers = snap.data!.docs.map(UserModel.fromFirestore).toList()
-            ..sort((a, b) => a.fullName.compareTo(b.fullName));
-          if (drivers.isEmpty) {
-            return EmptyState(
-              icon: Icons.local_shipping_outlined,
-              title: context.t('no_drivers'),
-              subtitle: context.t('no_drivers_body'),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-            itemCount: drivers.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, index) {
-              if (index == 0) return const _DriversHero();
-              return _DriverCard(driver: drivers[index - 1]);
-            },
-          );
-        },
+      body: Column(
+        children: [
+          const AdMobBanner(placement: AdMobPlacement.drivers),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .where('role', isEqualTo: 'driver')
+                  .where('isApproved', isEqualTo: true)
+                  .limit(100)
+                  .snapshots(),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final drivers =
+                    snap.data!.docs.map(UserModel.fromFirestore).toList()
+                      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+                if (drivers.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.local_shipping_outlined,
+                    title: context.t('no_drivers'),
+                    subtitle: context.t('no_drivers_body'),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                  itemCount: drivers.length + 1,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (_, index) {
+                    if (index == 0) return const _DriversHero();
+                    return _DriverCard(driver: drivers[index - 1]);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
