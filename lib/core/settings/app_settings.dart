@@ -291,6 +291,7 @@ class AppStrings {
     'no_stores': 'No stores available',
     'no_stores_body': 'Approved stores will appear here.',
     'call_store': 'Call store',
+    'call_failed': 'Could not open the phone app.',
     'menu_items': 'Menu items',
     'add_menu_item': 'Add menu item',
     'add_first_menu_item': 'Add your first product to the menu.',
@@ -683,6 +684,7 @@ class AppStrings {
         '\u0633\u062a\u0638\u0647\u0631 \u0627\u0644\u0645\u062d\u0644\u0627\u062a \u0627\u0644\u0645\u0642\u0628\u0648\u0644\u0629 \u0647\u0646\u0627.',
     'call_store':
         '\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0645\u062d\u0644',
+    'call_failed': 'تعذر فتح تطبيق الهاتف.',
     'menu_items': '\u0627\u0644\u0645\u0646\u064a\u0648',
     'add_menu_item': '\u0625\u0636\u0627\u0641\u0629 \u0645\u0646\u062a\u062c',
     'add_first_menu_item':

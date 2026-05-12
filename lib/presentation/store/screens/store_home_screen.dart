@@ -19,6 +19,10 @@ import '../../shared/widgets/app_menu_button.dart';
 import '../../shared/widgets/shared_widgets.dart';
 import '../../shared/widgets/subscription_gate.dart';
 
+const _maxMenuItemImageBase64Chars = 900000;
+
+int _base64EncodedLength(int byteLength) => ((byteLength + 2) ~/ 3) * 4;
+
 class StoreHomeScreen extends StatelessWidget {
   const StoreHomeScreen({super.key});
 
@@ -138,13 +142,13 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 55,
-      maxWidth: 900,
-      maxHeight: 900,
+      imageQuality: 42,
+      maxWidth: 640,
+      maxHeight: 640,
     );
     if (picked == null) return;
     final bytes = await picked.readAsBytes();
-    if (bytes.length > 650 * 1024) {
+    if (_base64EncodedLength(bytes.length) > _maxMenuItemImageBase64Chars) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.t('image_too_large'))),
@@ -202,6 +206,11 @@ class _MenuItemSheetState extends State<_MenuItemSheet> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
       if (mounted) Navigator.pop(context);
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? e.code)),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }

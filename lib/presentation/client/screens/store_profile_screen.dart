@@ -51,19 +51,55 @@ class StoreProfileScreen extends StatelessWidget {
   }
 
   Future<void> _call(BuildContext context) async {
+    final phone = _dialablePhone(store.phoneNumber);
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('call_failed'))),
+      );
+      return;
+    }
+
+    var opened = false;
+    try {
+      opened = await launchUrl(
+        Uri.parse('tel:$phone'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      opened = false;
+    }
+    if (!opened) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('call_failed'))),
+      );
+      return;
+    }
+
     final client = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-    await FirebaseFirestore.instance.collection('store_call_logs').add({
-      'storeId': store.uid,
-      'storeName': store.fullName,
-      'storePhone': store.phoneNumber,
-      'clientId': client.uid,
-      'clientName': client.fullName,
-      'clientPhone': client.phoneNumber,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    final normalized = store.phoneNumber.replaceAll(RegExp(r'[\s\-.]'), '');
-    await launchUrl(Uri(scheme: 'tel', path: normalized));
+    try {
+      await FirebaseFirestore.instance.collection('store_call_logs').add({
+        'storeId': store.uid,
+        'storeName': store.fullName,
+        'storePhone': store.phoneNumber,
+        'clientId': client.uid,
+        'clientName': client.fullName,
+        'clientPhone': client.phoneNumber,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException {
+      // Calling the store must not depend on analytics/log permissions.
+    }
   }
+}
+
+String _dialablePhone(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return '';
+  final startsWithPlus = trimmed.startsWith('+');
+  final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+  if (digits.isEmpty) return '';
+  return startsWithPlus ? '+$digits' : digits;
 }
 
 class _StoreHero extends StatelessWidget {
